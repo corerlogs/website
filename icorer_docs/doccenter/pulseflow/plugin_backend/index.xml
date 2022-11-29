@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>PulseFlow后台端 on 工匠之芯-文档中心</title><link>https://icorer.com/icorer_docs/doccenter/pulseflow/plugin_backend/</link><description>Recent content in PulseFlow后台端 on 工匠之芯-文档中心</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><atom:link href="https://icorer.com/icorer_docs/doccenter/pulseflow/plugin_backend/index.xml" rel="self" type="application/rss+xml"/><item><title>3.1 后台总览</title><link>https://icorer.com/icorer_docs/doccenter/pulseflow/plugin_backend/3.1/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://icorer.com/icorer_docs/doccenter/pulseflow/plugin_backend/3.1/</guid><description>PulseFLow还有一部分功能是集中在信息后端的，当PHP引擎发送信息给后端程序后，后端程序再把信息进行组装，发给下一级程序。
+一 . 组成部分 # 后端程序，分为以下几个部分：
+配置中心：（配置文件 + 配置解析器）（采用ini文件配置格式）。
+进程管理器：维持进程池，保持进程池的存活量。
+信息发送： 信息组装 + 信息发送（UDP发送）
+二. 工作流程 # 2.1 总体流程图 # 2.2 系统模型（进程池模型） # 后端组件采用进程池模型，主程序启动时，首先读取配置文件中关于进程池大小的配置选项，然后启动相关数量的子工作进程。
+随后主进程进入稳定性极高的进程池监控流程，如果拦截到子进程有挂掉的情况发生，读取挂掉的状态并在相应的进程池位置开辟新的工作子进程。
+通过进程池可以大大提高进程读取内核消息队列的效率，通过进程池管理程序可以大大提高整体后端程序的稳定性。
+2.3 功能分配 # 1. 主进程负责【管理进程池】，负责【创建可用的内核消息队列】。 # 2. 工作子进程负责 【监控内核消息队列】&amp;mdash;&amp;gt;【读取消息】&amp;mdash;&amp;gt;【组装信息】&amp;mdash;&amp;gt;【UDP发送下游】 #</description></item></channel></rss>
