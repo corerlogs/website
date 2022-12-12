@@ -1,0 +1,136 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=icon type=image/ico sizes=16x16 href=/icorer_blog/img/favicon.ico><meta property="og:image" content="https://res.cloudinary.com/malloc/image/upload/v1669271757/icorer.com/34047788_pepere.jpg"><title>Redis6客户端缓存的相关设计 | 笔迹-工匠之芯</title><meta name=author content="LB"><meta name=description content="这篇文章翻译自Redis官方博客，这篇文章阐述了Redis6中将如何支持客户端缓存功能。
+纽约Redis一天结束了，我于5:30在酒店起床，仍然与意大利时区保持同步，并立即走在曼哈顿的街道上，完全爱上了风景和美好的生活感觉。 但是我在Redis 6发行版中的感觉是，可能是最重要的功能，即新版本的Redis协议（RESP3）的采用曲线将非常缓慢，这是有充分理由的： 明智的人会在没有充分理由的情况下避免使用工具。 毕竟我为什么要这么严重地改进协议？主要有两个原因，即为客户提供更多的语义答复，并开放使用旧协议难以实现的新功能。 对我来说，最重要的功能之一就是客户端缓存。
+让我们回到一年前。我来到旧金山的Redis Conf 2018，当时我坚信客户端缓存是Redis未来最重要的事情。 如果我们需要快速存储和高速缓存，那么我们需要在客户端中存储信息的子集。这是对延迟较小且规模较大的数据提供服务的想法的自然扩展。事实上，几乎所有的大公司都已经这样做了，因为这是唯一的生存之道。然而，Redis无法在此过程中协助客户。 一个幸运的巧合希望Ben Malec在Redis Conf上确切地谈论客户端缓存[1]，仅使用Redis提供的工具和许多非常聪明的想法。
+[1] https://www.youtube.com/watch?v=kliQLwSikO4
+本采取的方法确实打开了我的想象。 Ben为了使他的设计工作而使用了两个关键思想。首先是使用Redis Cluster的“哈希槽”概念，以将key分为16k组。这样，客户端将无需跟踪每个key的有效性，但可以将单个元数据条目用于一组key。Ben使用Pub / Sub来更改键时发送通知，因此他需要应用程序各个部分的帮助，但是该架构非常可靠。 修改key？同时发布一条使它无效的消息。 在客户端，您是否在缓存key？记住缓存每个key的时间戳，并且在接收到无效消息时，还要记住每个插槽的无效时间。 当使用给定的缓存key时，通过检查缓存的key是否具有比该key所属的插槽接收到的失效时间戳更旧的时间戳，来进行懒惰驱逐：在这种情况下，该key是陈旧数据， 必须再次询问服务器。
+看完演讲之后，我意识到这是在服务器内部使用的好主意，以便允许Redis为客户端完成部分工作，并让客户端缓存更简单、更有效,所以我回家后,写了一个文档描述设计[2]。
+[2] https://groups.google.com/d/msg/redis-db/xfcnYkbutDw/kTwCozpBBwAJ
+但是，要使我的设计正常工作，我必须专注于将Redis协议切换到更好的协议，因此我开始编写规范，然后编写RESP3的代码，以及其他Redis 6之类的东西，例如ACL等，并且客户端缓存加入了 由于缺乏时间，我以某种方式放弃了Redis的许多构想的巨大空间。
+但是我还是在纽约街头思考这个想法。 后来和会议的朋友一起去吃午餐和喝咖啡休息时间。 当我回到酒店房间时，剩下的整个晚上都是在飞机起飞前的第二天，所以我开始遵循我一年前写给小组的建议，开始编写Redis 6客户端缓存的实现。 看起来仍然很棒。
+Redis服务器辅助的客户端缓存，最终称为跟踪(但我可能会改变想法)，是一个非常简单的功能，由几个关键的想法组成。
+key空间被划分为“缓存槽”，但它们比Ben使用的哈希槽大得多。 我们使用CRC64输出的24位，因此有超过1600万个不同的插槽。为什么这么多?因为我认为您希望有一个拥有1亿key的服务器，而一条无效消息应该只影响客户端缓存中的几个key。Redis中无效表的内存开销是130mb:一个8字节的数组，指向16M个条目。这对我来说是可以的，如果你想要这个功能，你就要充分利用你在客户端的所有内存，所以使用130MB的服务器端是可以的;您所赢得的是一个更细粒度的失效。
+客户端通过简单的命令以opt方式启用该特性：
+1 CLIENT TRACKING on 服务器会回复旧的+ OK，从那一刻开始，命令表中标记为“只读”的每个命令不仅会把键返回给调用者，而且还会产生副作用 客户端到目前为止请求的所有键的缓存插槽（但只有使用只读命令的键才是，这是服务器与客户端之间的协议）。Redis存储此信息的方法很简单。每个Redis客户端都有一个唯一的ID，因此，如果客户端ID 123执行有关将key散列到插槽1、2和5的MGET，我们将获得带有以下条目的无效表：
+11 -> [123] 22 -> [123] 35 -> [123] 但是稍后客户端ID 444也会询问插槽5中的key，因此该表将如下所示：
+15 -> [123, 444] 现在，其他一些客户端更改了插槽5中的某些key。发生的事情是Redis将检查Invalidation Table，以发现客户端123和444都可能在该插槽上缓存了key。我们将向这两个客户端发送无效消息，因此他们可以自由地以任何形式处理该消息：要么记住上一次插槽无效的时间戳记，然后以懒惰的方式检查时间戳记（或者 如果您更喜欢此渐进式“时期”：它比较安全），然后根据比较结果将其逐出。否则，客户端可以通过获取其在此特定插槽中缓存的内容的表来直接直接回收对象。这种具有24位哈希函数的方法不是问题，因为即使缓存了数千万个key，我们也不会有很长的列表。发送无效消息后，我们可以从无效表中删除条目，这样，我们将不再向这些客户端发送无效消息，直到它们不再读取该插槽的key为止。
+请注意，客户端不必真正使用hash函数的所有24位。例如，他们可能只使用20位，然后也会转移Redis发送给他们的无效消息槽。不确定这样做是否有很多好的理由，但在内存受限的系统中可能是一个想法。
+如果您严格按照我所说的进行操作，您会认为相同的连接同时接收到正常的客户端响应和无效消息。对于RESP3，这是可能的，因为无效消息是作为“推送”消息类型发送的。 但是，如果客户端是阻塞客户端，而不是事件驱动的客户端，则这将变得很复杂：应用程序需要某种方式不时读取新数据，并且看起来复杂而脆弱。 在这种情况下，最好使用另一个应用程序线程和另一个客户端连接，以便接收无效消息。 因此，您可以执行以下操作："><meta name=keywords content="blog,博客,工匠之芯,笔迹-工匠之芯"><meta name=twitter:card content="summary"><meta name=twitter:title content="Redis6客户端缓存的相关设计"><meta name=twitter:description content="这篇文章翻译自Redis官方博客，这篇文章阐述了Redis6中将如何支持客户端缓存功能。
+纽约Redis一天结束了，我于5:30在酒店起床，仍然与意大利时区保持同步，并立即走在曼哈顿的街道上，完全爱上了风景和美好的生活感觉。 但是我在Redis 6发行版中的感觉是，可能是最重要的功能，即新版本的Redis协议（RESP3）的采用曲线将非常缓慢，这是有充分理由的： 明智的人会在没有充分理由的情况下避免使用工具。 毕竟我为什么要这么严重地改进协议？主要有两个原因，即为客户提供更多的语义答复，并开放使用旧协议难以实现的新功能。 对我来说，最重要的功能之一就是客户端缓存。
+让我们回到一年前。我来到旧金山的Redis Conf 2018，当时我坚信客户端缓存是Redis未来最重要的事情。 如果我们需要快速存储和高速缓存，那么我们需要在客户端中存储信息的子集。这是对延迟较小且规模较大的数据提供服务的想法的自然扩展。事实上，几乎所有的大公司都已经这样做了，因为这是唯一的生存之道。然而，Redis无法在此过程中协助客户。 一个幸运的巧合希望Ben Malec在Redis Conf上确切地谈论客户端缓存[1]，仅使用Redis提供的工具和许多非常聪明的想法。
+[1] https://www.youtube.com/watch?v=kliQLwSikO4
+本采取的方法确实打开了我的想象。 Ben为了使他的设计工作而使用了两个关键思想。首先是使用Redis Cluster的“哈希槽”概念，以将key分为16k组。这样，客户端将无需跟踪每个key的有效性，但可以将单个元数据条目用于一组key。Ben使用Pub / Sub来更改键时发送通知，因此他需要应用程序各个部分的帮助，但是该架构非常可靠。 修改key？同时发布一条使它无效的消息。 在客户端，您是否在缓存key？记住缓存每个key的时间戳，并且在接收到无效消息时，还要记住每个插槽的无效时间。 当使用给定的缓存key时，通过检查缓存的key是否具有比该key所属的插槽接收到的失效时间戳更旧的时间戳，来进行懒惰驱逐：在这种情况下，该key是陈旧数据， 必须再次询问服务器。
+看完演讲之后，我意识到这是在服务器内部使用的好主意，以便允许Redis为客户端完成部分工作，并让客户端缓存更简单、更有效,所以我回家后,写了一个文档描述设计[2]。
+[2] https://groups.google.com/d/msg/redis-db/xfcnYkbutDw/kTwCozpBBwAJ
+但是，要使我的设计正常工作，我必须专注于将Redis协议切换到更好的协议，因此我开始编写规范，然后编写RESP3的代码，以及其他Redis 6之类的东西，例如ACL等，并且客户端缓存加入了 由于缺乏时间，我以某种方式放弃了Redis的许多构想的巨大空间。
+但是我还是在纽约街头思考这个想法。 后来和会议的朋友一起去吃午餐和喝咖啡休息时间。 当我回到酒店房间时，剩下的整个晚上都是在飞机起飞前的第二天，所以我开始遵循我一年前写给小组的建议，开始编写Redis 6客户端缓存的实现。 看起来仍然很棒。
+Redis服务器辅助的客户端缓存，最终称为跟踪(但我可能会改变想法)，是一个非常简单的功能，由几个关键的想法组成。
+key空间被划分为“缓存槽”，但它们比Ben使用的哈希槽大得多。 我们使用CRC64输出的24位，因此有超过1600万个不同的插槽。为什么这么多?因为我认为您希望有一个拥有1亿key的服务器，而一条无效消息应该只影响客户端缓存中的几个key。Redis中无效表的内存开销是130mb:一个8字节的数组，指向16M个条目。这对我来说是可以的，如果你想要这个功能，你就要充分利用你在客户端的所有内存，所以使用130MB的服务器端是可以的;您所赢得的是一个更细粒度的失效。
+客户端通过简单的命令以opt方式启用该特性：
+1 CLIENT TRACKING on 服务器会回复旧的+ OK，从那一刻开始，命令表中标记为“只读”的每个命令不仅会把键返回给调用者，而且还会产生副作用 客户端到目前为止请求的所有键的缓存插槽（但只有使用只读命令的键才是，这是服务器与客户端之间的协议）。Redis存储此信息的方法很简单。每个Redis客户端都有一个唯一的ID，因此，如果客户端ID 123执行有关将key散列到插槽1、2和5的MGET，我们将获得带有以下条目的无效表：
+11 -> [123] 22 -> [123] 35 -> [123] 但是稍后客户端ID 444也会询问插槽5中的key，因此该表将如下所示：
+15 -> [123, 444] 现在，其他一些客户端更改了插槽5中的某些key。发生的事情是Redis将检查Invalidation Table，以发现客户端123和444都可能在该插槽上缓存了key。我们将向这两个客户端发送无效消息，因此他们可以自由地以任何形式处理该消息：要么记住上一次插槽无效的时间戳记，然后以懒惰的方式检查时间戳记（或者 如果您更喜欢此渐进式“时期”：它比较安全），然后根据比较结果将其逐出。否则，客户端可以通过获取其在此特定插槽中缓存的内容的表来直接直接回收对象。这种具有24位哈希函数的方法不是问题，因为即使缓存了数千万个key，我们也不会有很长的列表。发送无效消息后，我们可以从无效表中删除条目，这样，我们将不再向这些客户端发送无效消息，直到它们不再读取该插槽的key为止。
+请注意，客户端不必真正使用hash函数的所有24位。例如，他们可能只使用20位，然后也会转移Redis发送给他们的无效消息槽。不确定这样做是否有很多好的理由，但在内存受限的系统中可能是一个想法。
+如果您严格按照我所说的进行操作，您会认为相同的连接同时接收到正常的客户端响应和无效消息。对于RESP3，这是可能的，因为无效消息是作为“推送”消息类型发送的。 但是，如果客户端是阻塞客户端，而不是事件驱动的客户端，则这将变得很复杂：应用程序需要某种方式不时读取新数据，并且看起来复杂而脆弱。 在这种情况下，最好使用另一个应用程序线程和另一个客户端连接，以便接收无效消息。 因此，您可以执行以下操作："><meta property="og:title" content="Redis6客户端缓存的相关设计"><meta property="og:description" content="这篇文章翻译自Redis官方博客，这篇文章阐述了Redis6中将如何支持客户端缓存功能。
+纽约Redis一天结束了，我于5:30在酒店起床，仍然与意大利时区保持同步，并立即走在曼哈顿的街道上，完全爱上了风景和美好的生活感觉。 但是我在Redis 6发行版中的感觉是，可能是最重要的功能，即新版本的Redis协议（RESP3）的采用曲线将非常缓慢，这是有充分理由的： 明智的人会在没有充分理由的情况下避免使用工具。 毕竟我为什么要这么严重地改进协议？主要有两个原因，即为客户提供更多的语义答复，并开放使用旧协议难以实现的新功能。 对我来说，最重要的功能之一就是客户端缓存。
+让我们回到一年前。我来到旧金山的Redis Conf 2018，当时我坚信客户端缓存是Redis未来最重要的事情。 如果我们需要快速存储和高速缓存，那么我们需要在客户端中存储信息的子集。这是对延迟较小且规模较大的数据提供服务的想法的自然扩展。事实上，几乎所有的大公司都已经这样做了，因为这是唯一的生存之道。然而，Redis无法在此过程中协助客户。 一个幸运的巧合希望Ben Malec在Redis Conf上确切地谈论客户端缓存[1]，仅使用Redis提供的工具和许多非常聪明的想法。
+[1] https://www.youtube.com/watch?v=kliQLwSikO4
+本采取的方法确实打开了我的想象。 Ben为了使他的设计工作而使用了两个关键思想。首先是使用Redis Cluster的“哈希槽”概念，以将key分为16k组。这样，客户端将无需跟踪每个key的有效性，但可以将单个元数据条目用于一组key。Ben使用Pub / Sub来更改键时发送通知，因此他需要应用程序各个部分的帮助，但是该架构非常可靠。 修改key？同时发布一条使它无效的消息。 在客户端，您是否在缓存key？记住缓存每个key的时间戳，并且在接收到无效消息时，还要记住每个插槽的无效时间。 当使用给定的缓存key时，通过检查缓存的key是否具有比该key所属的插槽接收到的失效时间戳更旧的时间戳，来进行懒惰驱逐：在这种情况下，该key是陈旧数据， 必须再次询问服务器。
+看完演讲之后，我意识到这是在服务器内部使用的好主意，以便允许Redis为客户端完成部分工作，并让客户端缓存更简单、更有效,所以我回家后,写了一个文档描述设计[2]。
+[2] https://groups.google.com/d/msg/redis-db/xfcnYkbutDw/kTwCozpBBwAJ
+但是，要使我的设计正常工作，我必须专注于将Redis协议切换到更好的协议，因此我开始编写规范，然后编写RESP3的代码，以及其他Redis 6之类的东西，例如ACL等，并且客户端缓存加入了 由于缺乏时间，我以某种方式放弃了Redis的许多构想的巨大空间。
+但是我还是在纽约街头思考这个想法。 后来和会议的朋友一起去吃午餐和喝咖啡休息时间。 当我回到酒店房间时，剩下的整个晚上都是在飞机起飞前的第二天，所以我开始遵循我一年前写给小组的建议，开始编写Redis 6客户端缓存的实现。 看起来仍然很棒。
+Redis服务器辅助的客户端缓存，最终称为跟踪(但我可能会改变想法)，是一个非常简单的功能，由几个关键的想法组成。
+key空间被划分为“缓存槽”，但它们比Ben使用的哈希槽大得多。 我们使用CRC64输出的24位，因此有超过1600万个不同的插槽。为什么这么多?因为我认为您希望有一个拥有1亿key的服务器，而一条无效消息应该只影响客户端缓存中的几个key。Redis中无效表的内存开销是130mb:一个8字节的数组，指向16M个条目。这对我来说是可以的，如果你想要这个功能，你就要充分利用你在客户端的所有内存，所以使用130MB的服务器端是可以的;您所赢得的是一个更细粒度的失效。
+客户端通过简单的命令以opt方式启用该特性：
+1 CLIENT TRACKING on 服务器会回复旧的+ OK，从那一刻开始，命令表中标记为“只读”的每个命令不仅会把键返回给调用者，而且还会产生副作用 客户端到目前为止请求的所有键的缓存插槽（但只有使用只读命令的键才是，这是服务器与客户端之间的协议）。Redis存储此信息的方法很简单。每个Redis客户端都有一个唯一的ID，因此，如果客户端ID 123执行有关将key散列到插槽1、2和5的MGET，我们将获得带有以下条目的无效表：
+11 -> [123] 22 -> [123] 35 -> [123] 但是稍后客户端ID 444也会询问插槽5中的key，因此该表将如下所示：
+15 -> [123, 444] 现在，其他一些客户端更改了插槽5中的某些key。发生的事情是Redis将检查Invalidation Table，以发现客户端123和444都可能在该插槽上缓存了key。我们将向这两个客户端发送无效消息，因此他们可以自由地以任何形式处理该消息：要么记住上一次插槽无效的时间戳记，然后以懒惰的方式检查时间戳记（或者 如果您更喜欢此渐进式“时期”：它比较安全），然后根据比较结果将其逐出。否则，客户端可以通过获取其在此特定插槽中缓存的内容的表来直接直接回收对象。这种具有24位哈希函数的方法不是问题，因为即使缓存了数千万个key，我们也不会有很长的列表。发送无效消息后，我们可以从无效表中删除条目，这样，我们将不再向这些客户端发送无效消息，直到它们不再读取该插槽的key为止。
+请注意，客户端不必真正使用hash函数的所有24位。例如，他们可能只使用20位，然后也会转移Redis发送给他们的无效消息槽。不确定这样做是否有很多好的理由，但在内存受限的系统中可能是一个想法。
+如果您严格按照我所说的进行操作，您会认为相同的连接同时接收到正常的客户端响应和无效消息。对于RESP3，这是可能的，因为无效消息是作为“推送”消息类型发送的。 但是，如果客户端是阻塞客户端，而不是事件驱动的客户端，则这将变得很复杂：应用程序需要某种方式不时读取新数据，并且看起来复杂而脆弱。 在这种情况下，最好使用另一个应用程序线程和另一个客户端连接，以便接收无效消息。 因此，您可以执行以下操作："><meta property="og:type" content="article"><meta property="og:url" content="https://icorer.com/icorer_blog/posts/related-design-of-redis6-client-cache/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2020-03-16T13:15:18+08:00"><meta property="article:modified_time" content="2020-03-16T13:15:18+08:00"><link rel=stylesheet href=/icorer_blog/css/bootstrap.min.css crossorigin=anonymous><link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css rel=stylesheet type=text/css><link rel=stylesheet href=/icorer_blog/sass/main.css><link rel=stylesheet href=/icorer_blog/zoomjs/zoom.min.css><script src=/icorer_blog/js/lazysizes.min.js></script>
+<link rel=apple-touch-icon sizes=180x180 href=/icorer_blog/apple-touch-icon.png><link rel=manifest href=/icorer_blog/site.webmanifest></head><body><nav class="navbar navbar-default navbar-custom navbar-fixed-top invert"><div class=container-fluid><div class="navbar-header page-scroll"><button type=button class=navbar-toggle>
+<span class=sr-only>Toggle navigation</span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span></button>
+<a class=navbar-brand href=https://icorer.com/icorer_blog/>笔迹-工匠之芯</a></div><div id=huxblog_navbar><div class=navbar-collapse><ul class="nav navbar-nav navbar-right"><li><a href=https://icorer.com title=工匠之芯>工匠之芯</a></li><li><a href=https://icorer.com/icorer_about title=关于我>关于我</a></li><li><a href=https://github.com/gitsrc title=开源仓库>开源仓库</a></li><li class=search-icon><a href=javascript:void(0)><i class="fa fa-search"></i></a></li></ul></div></div></div></nav><script>var $body=document.body,$toggle=document.querySelector(".navbar-toggle"),$navbar=document.querySelector("#huxblog_navbar"),$collapse=document.querySelector(".navbar-collapse"),__HuxNav__={close:function(){$navbar.className=" ",setTimeout(function(){$navbar.className.indexOf("in")<0&&($collapse.style.height="0px")},400)},open:function(){$collapse.style.height="auto",$navbar.className+=" in"}};$toggle.addEventListener("click",function(){$navbar.className.indexOf("in")>0?__HuxNav__.close():__HuxNav__.open()}),document.addEventListener("click",function(e){if(e.target==$toggle)return;if(e.target.className=="icon-bar")return;__HuxNav__.close()})</script><div class=search-page><div class=search-icon-close-container><span class=search-icon-close><i class="fa fa-chevron-down"></i></span></div><div class="search-main container"><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><form></form><input type=text id=search-input placeholder=内容搜索...></form><div id=search-results class=mini-post-list></div></div></div></div></div><style type=text/css>header.intro-header{position:relative;background-image:url('')}</style><header class="intro-header style-text"><div class=header-mask></div><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><div class=post-heading><div class=tags><a class=tag href=/icorer_blog/tags/redis/ title=redis>redis</a>
+<a class=tag href=/icorer_blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8A%80%E6%9C%AF/ title=数据库技术>数据库技术</a></div><h1>Redis6客户端缓存的相关设计</h1><h2 class=subheading></h2><span class=meta>Posted by LB
+on Mon, Mar 16, 2020</span></div></div></div></div></header><article><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+post-container"><p><strong>这篇文章翻译自Redis官方博客，这篇文章阐述了Redis6中将如何支持客户端缓存功能。</strong></p><p>纽约Redis一天结束了，我于5:30在酒店起床，仍然与意大利时区保持同步，并立即走在曼哈顿的街道上，完全爱上了风景和美好的生活感觉。 但是我在Redis 6发行版中的感觉是，可能是最重要的功能，即新版本的Redis协议（RESP3）的采用曲线将非常缓慢，这是有充分理由的： 明智的人会在没有充分理由的情况下避免使用工具。 毕竟我为什么要这么严重地改进协议？主要有两个原因，即为客户提供更多的语义答复，并开放使用旧协议难以实现的新功能。 对我来说，最重要的功能之一就是<strong>客户端缓存</strong>。</p><p>让我们回到一年前。我来到旧金山的Redis Conf 2018，当时我坚信客户端缓存是Redis未来最重要的事情。 如果我们需要快速存储和高速缓存，那么我们需要在客户端中存储信息的子集。这是对延迟较小且规模较大的数据提供服务的想法的自然扩展。事实上，几乎所有的大公司都已经这样做了，因为这是唯一的生存之道。然而，Redis无法在此过程中协助客户。 一个幸运的巧合希望Ben Malec在Redis Conf上确切地谈论客户端缓存[1]，仅使用Redis提供的工具和许多非常聪明的想法。</p><p><figure><a class=paragraph-image><img data-src=https://icorer.com/icorer_blog/img/usr/uploads/2020/03/597847106.png data-action=zoom alt class=lazyload></a></figure></p><p>[1] <a href="https://www.youtube.com/watch?v=kliQLwSikO4" target=_blank>https://www.youtube.com/watch?v=kliQLwSikO4</a></p><p>本采取的方法确实打开了我的想象。 Ben为了使他的设计工作而使用了两个关键思想。首先是使用Redis Cluster的“哈希槽”概念，以将key分为16k组。这样，客户端将无需跟踪每个key的有效性，但可以将单个元数据条目用于一组key。Ben使用Pub / Sub来更改键时发送通知，因此他需要应用程序各个部分的帮助，但是该架构非常可靠。 修改key？同时发布一条使它无效的消息。 在客户端，您是否在缓存key？记住缓存每个key的时间戳，并且在接收到无效消息时，还要记住每个插槽的无效时间。 当使用给定的缓存key时，通过检查缓存的key是否具有比该key所属的插槽接收到的失效时间戳更旧的时间戳，来进行懒惰驱逐：在这种情况下，该key是陈旧数据， 必须再次询问服务器。</p><p>看完演讲之后，我意识到这是在服务器内部使用的好主意，以便允许Redis为客户端完成部分工作，并让客户端缓存更简单、更有效,所以我回家后,写了一个文档描述设计[2]。</p><p>[2] <a href=https://groups.google.com/d/msg/redis-db/xfcnYkbutDw/kTwCozpBBwAJ target=_blank>https://groups.google.com/d/msg/redis-db/xfcnYkbutDw/kTwCozpBBwAJ</a></p><p>但是，要使我的设计正常工作，我必须专注于将Redis协议切换到更好的协议，因此我开始编写规范，然后编写RESP3的代码，以及其他Redis 6之类的东西，例如ACL等，并且客户端缓存加入了 由于缺乏时间，我以某种方式放弃了Redis的许多构想的巨大空间。</p><p>但是我还是在纽约街头思考这个想法。 后来和会议的朋友一起去吃午餐和喝咖啡休息时间。 当我回到酒店房间时，剩下的整个晚上都是在飞机起飞前的第二天，所以我开始遵循我一年前写给小组的建议，开始编写Redis 6客户端缓存的实现。 看起来仍然很棒。</p><p>Redis服务器辅助的客户端缓存，最终称为跟踪(但我可能会改变想法)，是一个非常简单的功能，由几个关键的想法组成。</p><p>key空间被划分为“缓存槽”，但它们比Ben使用的哈希槽大得多。 我们使用<strong>CRC64</strong>输出的24位，因此有超过1600万个不同的插槽。为什么这么多?因为我认为您希望有一个拥有1亿key的服务器，而一条无效消息应该只影响客户端缓存中的几个key。Redis中无效表的内存开销是130mb:一个8字节的数组，指向16M个条目。这对我来说是可以的，如果你想要这个功能，你就要充分利用你在客户端的所有内存，所以使用130MB的服务器端是可以的;您所赢得的是一个更细粒度的失效。</p><p>客户端通过简单的命令以opt方式启用该特性：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span>    CLIENT TRACKING on
+</span></span></code></pre></div><p>服务器会回复旧的+ OK，从那一刻开始，命令表中标记为“只读”的每个命令不仅会把键返回给调用者，而且还会产生副作用 客户端到目前为止请求的所有键的缓存插槽（但只有使用只读命令的键才是，这是服务器与客户端之间的协议）。Redis存储此信息的方法很简单。每个Redis客户端都有一个唯一的ID，因此，如果客户端ID 123执行有关将key散列到插槽1、2和5的MGET，我们将获得带有以下条目的无效表：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#bd93f9>1</span> -&gt; <span style=color:#ff79c6>[</span>123<span style=color:#ff79c6>]</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span><span style=color:#bd93f9>2</span> -&gt; <span style=color:#ff79c6>[</span>123<span style=color:#ff79c6>]</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span><span><span style=color:#bd93f9>5</span> -&gt; <span style=color:#ff79c6>[</span>123<span style=color:#ff79c6>]</span>
+</span></span></code></pre></div><p>但是稍后客户端ID 444也会询问插槽5中的key，因此该表将如下所示：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#bd93f9>5</span> -&gt; <span style=color:#ff79c6>[</span>123, 444<span style=color:#ff79c6>]</span>
+</span></span></code></pre></div><p>现在，其他一些客户端更改了插槽5中的某些key。发生的事情是Redis将检查Invalidation Table，以发现客户端123和444都可能在该插槽上缓存了key。我们将向这两个客户端发送无效消息，因此他们可以自由地以任何形式处理该消息：要么记住上一次插槽无效的时间戳记，然后以懒惰的方式检查时间戳记（或者 如果您更喜欢此渐进式“时期”：它比较安全），然后根据比较结果将其逐出。否则，客户端可以通过获取其在此特定插槽中缓存的内容的表来直接直接回收对象。这种具有24位哈希函数的方法不是问题，因为即使缓存了数千万个key，我们也不会有很长的列表。发送无效消息后，我们可以从无效表中删除条目，这样，我们将不再向这些客户端发送无效消息，直到它们不再读取该插槽的key为止。</p><p>请注意，客户端不必真正使用hash函数的所有24位。例如，他们可能只使用20位，然后也会转移Redis发送给他们的无效消息槽。不确定这样做是否有很多好的理由，但在内存受限的系统中可能是一个想法。</p><p>如果您严格按照我所说的进行操作，您会认为相同的连接同时接收到正常的客户端响应和无效消息。对于RESP3，这是可能的，因为无效消息是作为“推送”消息类型发送的。 但是，如果客户端是阻塞客户端，而不是事件驱动的客户端，则这将变得很复杂：应用程序需要某种方式不时读取新数据，并且看起来复杂而脆弱。 在这种情况下，最好使用另一个应用程序线程和另一个客户端连接，以便接收无效消息。 因此，您可以执行以下操作：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span>    CLIENT TRACKING on REDIRECT <span style=color:#bd93f9>1234</span>
+</span></span></code></pre></div><p>基本上，我们可以说通过当前连接获得的所有key，我们希望将无效消息发送给客户端1234。例如，在连接池的情况下，多个客户端可能会要求将无效消息重定向到单个客户端。 您需要做的就是创建此特殊连接以接收无效消息，调用CLIENT ID知道此客户端连接具有哪个ID，然后启用跟踪。</p><p>还有一个问题:如果我们失去了与服务器的连接，会发生什么呢? 我们可能会遇到麻烦，因为无效消息将不再被接收。 通常，应用程序会检测到链接断开，并重新连接，刷新当前缓存（或采用更多软分辨率，例如将所有时隙的所有时间戳记在未来几秒钟，以便有一些时间在服务时填充缓存 可能过时的数据）。 但是，如果无效线程不时ping通该连接以确保该连接处于活动状态，则可能是一个更好的主意。但是，为了减少陈旧数据的风险，Redis还将开始使用特殊的推式消息通知已将无效消息重定向到其他已断开连接的其他客户端的情况，仅使用特殊的推送消息：在下一个查询中执行 客户会知道的。</p><p>我所描述的只是合并到Redis不稳定中。 可能这不是硬道理，但我们距离第一个Redis 6候选发布版本还有几个月的时间，现在有时间更改所有内容：请将您的反馈发送给我。 我也在寻找启用RESP2功能的方法。 仅当启用了重定向时，这才起作用，并且侦听消息的客户端可能应该进入发布/订阅模式，以便我们可以发送某种发布/订阅消息。 这样，可以完全重用旧客户端。</p><p>我希望这足以激发您的胃口：如果我们在Redis内很好地执行此操作，然后将其记录下来以使客户作者知道如何提供支持，那么即使在运行应用程序的情况下，数据也可能比以往更接近应用程序 由迄今为止尚未尝试实现客户端缓存的小型团队组成。 对于已经这样做的大型团队和非常大型的应用程序，可以减少开销以及实现的复杂性。</p><p>原文链接：http://antirez.com/news/130
+[[1]]: <a href="https://www.youtube.com/watch?v=kliQLwSikO4" target=_blank>https://www.youtube.com/watch?v=kliQLwSikO4</a> &ldquo;[1]&rdquo;</p><hr style=visibility:hidden><ul class=pager><li class=previous><a href=/icorer_blog/posts/redis-client-side-cache-redis-client-side-cache-redisconf18/ data-toggle=tooltip data-placement=top title="Redis Client Side Cache - Redis客户端缓存 - RedisConf18">Previous<br><span>Redis Client Side Cache - Redis客户端缓存 - RedisConf18</span></a></li><li class=next><a href=/icorer_blog/posts/performance_comparison_between_http3_and_http2/ data-toggle=tooltip data-placement=top title=HTTP/3与HTTP/2的性能比较>Next<br><span>HTTP/3与HTTP/2的性能比较</span></a></li></ul><hr style=visibility:hidden></div><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+sidebar-container"><section><hr class="hidden-sm hidden-xs"><h5>FEATURED TAGS</h5><div class=tags><a href=/icorer_blog/tags/blockchain/>blockchain</a>
+<a href=/icorer_blog/tags/clang/>CLang</a>
+<a href=/icorer_blog/tags/cloudnative/>cloudnative</a>
+<a href=/icorer_blog/tags/cmake/>Cmake</a>
+<a href=/icorer_blog/tags/drand/>drand</a>
+<a href=/icorer_blog/tags/epoll/>epoll</a>
+<a href=/icorer_blog/tags/fpga/>FPGA</a>
+<a href=/icorer_blog/tags/gc/>GC</a>
+<a href=/icorer_blog/tags/golang/>GoLang</a>
+<a href=/icorer_blog/tags/hackathon/>Hackathon</a>
+<a href=/icorer_blog/tags/http2/>HTTP2</a>
+<a href=/icorer_blog/tags/http3/>HTTP3</a>
+<a href=/icorer_blog/tags/icefiredb/>IceFireDB</a>
+<a href=/icorer_blog/tags/k8s/>k8s</a>
+<a href=/icorer_blog/tags/kafka/>kafka</a>
+<a href=/icorer_blog/tags/linux/>linux</a>
+<a href=/icorer_blog/tags/nginx/>Nginx</a>
+<a href=/icorer_blog/tags/nosql/>NoSQL</a>
+<a href=/icorer_blog/tags/php/>PHP</a>
+<a href=/icorer_blog/tags/php-kernel/>php kernel</a>
+<a href=/icorer_blog/tags/php%E5%86%85%E6%A0%B8/>PHP内核</a>
+<a href=/icorer_blog/tags/quic/>QUIC</a>
+<a href=/icorer_blog/tags/redis/>redis</a>
+<a href=/icorer_blog/tags/serverless/>serverless</a>
+<a href=/icorer_blog/tags/unikernel/>unikernel</a>
+<a href=/icorer_blog/tags/wanxiang/>Wanxiang</a>
+<a href=/icorer_blog/tags/web3/>web3</a>
+<a href=/icorer_blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/>中间件</a>
+<a href=/icorer_blog/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/>云原生</a>
+<a href=/icorer_blog/tags/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/>信息安全</a>
+<a href=/icorer_blog/tags/%E5%86%85%E5%AD%98%E6%95%B0%E6%8D%AE%E5%BA%93/>内存数据库</a>
+<a href=/icorer_blog/tags/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/>内存泄漏</a>
+<a href=/icorer_blog/tags/%E5%86%85%E6%A0%B8%E6%BA%90%E7%A0%81/>内核源码</a>
+<a href=/icorer_blog/tags/%E5%86%85%E6%A0%B8%E7%A0%94%E7%A9%B6/>内核研究</a>
+<a href=/icorer_blog/tags/%E5%8C%BA%E5%9D%97%E9%93%BE/>区块链</a>
+<a href=/icorer_blog/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/>垃圾回收</a>
+<a href=/icorer_blog/tags/%E5%AD%98%E5%82%A8/>存储</a>
+<a href=/icorer_blog/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E5%BC%80%E5%8F%91/>底层开发</a>
+<a href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/>底层研究</a>
+<a href=/icorer_blog/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/>开源项目</a>
+<a href=/icorer_blog/tags/%E5%BC%82%E6%9E%84%E8%AE%A1%E7%AE%97/>异构计算</a>
+<a href=/icorer_blog/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/>微服务</a>
+<a href=/icorer_blog/tags/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/>性能测试</a>
+<a href=/icorer_blog/tags/%E6%8A%80%E6%9C%AF%E7%A7%91%E6%99%AE/>技术科普</a>
+<a href=/icorer_blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8A%80%E6%9C%AF/>数据库技术</a>
+<a href=/icorer_blog/tags/%E6%96%87%E7%AB%A0%E7%BF%BB%E8%AF%91/>文章翻译</a>
+<a href=/icorer_blog/tags/%E6%96%B0%E6%9E%B6%E6%9E%84/>新架构</a>
+<a href=/icorer_blog/tags/%E6%97%B6%E5%BA%8F%E6%95%B0%E6%8D%AE%E5%BA%93/>时序数据库</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/>服务治理</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC/>服务网格</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E9%81%A5%E6%B5%8B/>服务遥测</a>
+<a href=/icorer_blog/tags/%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A/>测试报告</a>
+<a href=/icorer_blog/tags/%E7%A0%94%E7%A9%B6%E6%8A%A5%E5%91%8A/>研究报告</a>
+<a href=/icorer_blog/tags/%E7%BC%93%E5%AD%98%E6%8A%80%E6%9C%AF/>缓存技术</a>
+<a href=/icorer_blog/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/>网络安全</a>
+<a href=/icorer_blog/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/>虚拟机</a>
+<a href=/icorer_blog/tags/%E8%A1%8C%E4%B8%9A%E6%8A%A5%E5%91%8A/>行业报告</a>
+<a href=/icorer_blog/tags/%E8%AE%BA%E6%96%87/>论文</a>
+<a href=/icorer_blog/tags/%E9%9B%B6%E4%BF%A1%E4%BB%BB/>零信任</a>
+<a href=/icorer_blog/tags/%E9%AB%98%E6%80%A7%E8%83%BD/>高性能</a></div></section></div></div></div></article><footer><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><ul class="list-inline text-center"><li><a href=/icorer_blog/index.xml><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-rss fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://twitter.com/corerman1><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-twitter fa-stack-1x fa-inverse"></i></span></a></li><li><a target=_blank href=https://github.com/gitsrc><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-github fa-stack-1x fa-inverse"></i></span></a></li></ul><p class="copyright text-muted">Copyright &copy; 笔迹-工匠之芯 2022</p></div></div></div></footer><script src=/icorer_blog/js/jquery.min.js></script>
+<script src=/icorer_blog/js/bootstrap.min.js crossorigin=anonymous></script>
+<script src=/icorer_blog/js/hux-blog.min.c4ea77041cd3edbfc8b2622cd887a9a5d8760a4162d14489e36d2a3fa4c90172.js></script>
+<script src=/icorer_blog/js/simple-jekyll-search.min.js></script>
+<script src=/icorer_blog/js/search.min.7d1445cf07369bca2715d9f63738c16c73a7a2273a95d6729bee561f7e84c6c8.js></script>
+<script src=/icorer_blog/zoomjs/zoom.min.js></script></body></html>
