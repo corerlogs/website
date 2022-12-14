@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SBT on 笔迹-工匠之芯</title><link>https://icorer.com/icorer_blog/tags/sbt/</link><description>Recent content in SBT on 笔迹-工匠之芯</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Wed, 14 Dec 2022 11:55:18 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/sbt/index.xml" rel="self" type="application/rss+xml"/><item><title>SBT vs SSI：Web3对数字身份解决方案的探索</title><link>https://icorer.com/icorer_blog/posts/web3/soulbound-tokens-vs-self-sovereign-identity/</link><pubDate>Wed, 14 Dec 2022 11:55:18 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/web3/soulbound-tokens-vs-self-sovereign-identity/</guid><description>在题为“去中心化社会:寻找Web 3的灵魂”的研究论文中，以太坊(ETH)的联合创始人维塔利克·布特林(Vitalik Buterin)与作者格伦·韦勒(Glen Weyl)和普嘉·阿卢瓦利亚·奥勒哈沃(Puja Ahluwalia Ohlhaver)一起，介绍了“灵魂绑定令牌”(SBTs)的概念，作为对数字身份的一种全新看法。这篇文章谈到了数字身份在Web3中的重要性，以及满足Web3的高度金融化，建立同等数量的信任和社会关系的重要性。
+然而，我们不禁注意到SBTs的用例与自我主权身份(SSI)所做的是多么接近。SSI已经在为创造一个可信的社会铺平道路。我们想比较Vitalik等人的灵魂绑定令牌假说和SSI，看看当我们进入Web3时，哪一个最有效。
+在其最简单的形式中，灵魂绑定令牌是可以在数字钱包中显示的不可转移的可替换令牌。这些代币是由一个灵魂(个体)发给另一个灵魂的。他们不能和任何人交易。一旦获得一个SBT，它就被绑定到那个人身上，因此得名soulbound。
+SSI使用数据发布者、验证者和持有者之间的关系来创建一个以用户为中心的模型。在这种模式下，持有者可以选择与验证者共享他们需要的确切信息(而不是更多)。然后，验证者可以将信息与发行者的签名(有时存储在区块链上)进行交叉引用，以确保持有人的数据是有效的。
+SBT的吸引力在于它们的不可转让性，它们与接受者绑定在一起。它们可以用于代表其所有者声明凭证和形成在线身份。类似于一组徽章，您可以有多个SBT用于各种凭证，从驾驶执照到代表音乐会门票的令牌。
+另一方面，SSI 的不同之处在于它们的默认可见性是私有的和账本外的，而 SBT 默认是公开的和账本上的。SSI侧重于允许用户控制他们的数据，并将发布的文档保存在私人数字钱包中，默认的隐私模式让持有者对他们的个人数据以及如何访问这些数据有更多的控制权。
+SBT vs NFT vs SSI 作为一种身份解决方案，SBT 的功能类似于不可替代令牌 ( NFT )。关键区别在于它们缺乏可转移性。SBT 现在正在建设中，但面临一个关键障碍：隐私。
+SBT 是 Web3 中表达自我的一种方式，类似于加密货币和 NFT 的所有权。然而，他们可以将现代面临的许多当前身份问题复制到一个新的公共和不可变平台上，这是 SBT 的主要缺点。
+围绕SBTs的建立存在紧张关系，一些人担心它可能会建立一个公共的社会价值体系，类似于中国的社会信用体系。有人担心，如果被广泛采用，我们在现实世界中取得的成就和犯下的错误可能等同于与该行动相关的SBT。这将为你的每一项成就和犯下的每一个错误建立一个终身的账本，没有交易功能。
+从这个意义上说，SBT不能避免人为错误；发行人有可能将SBT发送给不正确的持有人，这可能会导致许多隐私问题。已经有一个案例，一个人创造了一个“混蛋SBT”，一个令牌，使用与NFT相同的技术，但可以被发送给一个人，然后他只能通过支付费用来删除它。SBTs的这一方面有可能造成巨大的伤害，并可能贬低Web3的灵魂。
+SSI 的存在是为了解决当前在以数字为中心的社会中面临的关键身份问题。通过创建一个用户控制他们的数据并有权将其发送给他们希望的任何人的系统，我们开始促进真正的数据所有权成为一种社会规范。公司和个人之间的数据交易可以像消息传递一样简单。通过不建立固有的面向公众的身份系统，SSI 可以解决数据盗窃和中心化数据孤岛的问题，而发行人和持有人之间没有任何歧义。
+SBTs是建立在预先存在的Web3概念上的，比如NFT，这为社区采用它们提供了一条强有力的途径，特别是因为开发人员已经习惯了这种工具。然而，随着社区开始理解SBTs的公共性质以及由此产生的隐私问题(例如，在线行为的可追溯性)，他们将开始寻找保护隐私的替代方案。
+另一方面，SSI近年来受到大学的青睐，并在管理机构中拥有强大的市场，特别是考虑到最近发生的事件，如新冠肺炎。对SSI的兴趣已经开始增长，欧盟委员会提议所有欧洲人都应该拥有一个安全的数字身份。这种政府采用水平将有利于SSI进一步扩展到教育和医疗保健等全球关键领域。
+SBTs和SSI都因解决了Web3当前的身份混乱而获得公众关注。SBT寻求利用社区对NFT的熟悉程度来确保快速无缝的采用。然而，SSI希望通过专注于隐私的技术来解决这些问题，这项技术是经过多年研究开发出来的。尽管如此，这两个系统都有潜力为我们的数字生活增加价值。尽管如此，SSI是唯一一个足够深入地解决身份和隐私问题的方案，让Web3真正被大众接受，并将我们置于我们自己生态系统的中心。
+了解更多 Ethereum&amp;rsquo;s Vitalik Buterin Lists &amp;lsquo;Worthwhile&amp;rsquo; Ideas for Developers to Work On
+6 Key Points in Vitalik Buterin&amp;rsquo;s Vision for Ethereum Presented at EthCC These Are Some Topics Ethereum Developers Disagree With Vitalik Buterin On</description></item></channel></rss>
