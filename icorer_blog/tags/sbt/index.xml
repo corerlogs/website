@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SBT on 笔迹-工匠之芯</title><link>https://icorer.com/icorer_blog/tags/sbt/</link><description>Recent content in SBT on 笔迹-工匠之芯</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Wed, 14 Dec 2022 11:55:18 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/sbt/index.xml" rel="self" type="application/rss+xml"/><item><title>SBT vs SSI：Web3对数字ID解决方案</title><link>https://icorer.com/icorer_blog/posts/web3/soulbound-tokens-vs-self-sovereign-identity/</link><pubDate>Wed, 14 Dec 2022 11:55:18 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/web3/soulbound-tokens-vs-self-sovereign-identity/</guid><description>在最近题为“去中心化社会：寻找 Web 3 的灵魂”的研究论文中，以太坊 (ETH)联合创始人Vitalik Buterin以及作者 Glen Weyl 和 Puja Ahluwalia Ohlhaver 介绍了“Soulbound Tokens”(SBT) 的概念，作为一个品牌——对数字身份的新看法。该论文谈到了Web3中数字身份的重要性，并通过同等数量的信任和社会关系建设来满足 Web3 的超金融化。
+然而，我们不禁注意到 SBT 的用例与自我主权身份 (SSI)的作用有多么接近。SSI 已经为创建一个值得信赖的社会铺平了道路。我们想将 Vitalik 等人的 Soulbound 代币假说与 SSI 进行比较，看看在我们进入 Web3 时哪个最有效。
+在最简单的形式中，soulbound 代币是不可转让的可替代代币，可以显示在数字钱包中。这些令牌由一个灵魂（个人）发行给另一个灵魂。他们不能与其他任何人交易。一旦获得 SBT，它就会绑定到那个人，因此得名soulbound。
+SSI 使用发行者、验证者和数据持有者之间的关系来创建以用户为中心的模型。在这个模型中，持有者可以选择与验证者共享他们需要的确切信息（而不是更多）。然后，验证者可以将信息与发行者的签名（有时存储在区块链上）进行交叉引用，以确保持有者的数据有效。
+SBT 的吸引力在于它们不可转让的性质，它们与接收者绑定。它们可用于代表其所有者声明凭据并形成在线身份。类似于一组徽章，您可以有多个 SBT 用于各种凭证，从驾驶执照到代表音乐会门票的令牌。
+另一方面，SSI 的不同之处在于它们的默认可见性是私有的和账本外的，而 SBT 默认是公开的和账本上的。
+SSI 专注于允许用户控制他们的数据并将已发布的文件保存在私人数字钱包中。默认的隐私模式使持有者可以更好地控制他们的个人数据及其访问方式。
+SBT vs NFT vs 作为一种身份解决方案，SBT 的功能类似于不可替代令牌 ( NFT )。关键区别在于它们缺乏可转移性。SBT 现在正在建设中，但面临一个关键障碍：隐私。
+SBT 是 Web3 中表达自我的一种方式，类似于加密货币和 NFT 的所有权。然而，他们可以将现代面临的许多当前身份问题复制到一个新的公共和不可变平台上，这是 SBT 的主要缺点。
+围绕 SBT 的创建存在紧张关系，一些人担心它可能会创建一个类似于中国社会信用体系的公共社会价值体系。有人担心，如果广泛采用，我们在现实世界中取得的成就和错误可能等同于与该行动相关的 SBT。这将创建一个记录所有成就和错误的分类账，没有贸易功能，终生。
+从这个意义上说，SBT 不能避免人为错误；发行人有可能将 SBT 发送给错误的持有人，这可能会导致许多隐私问题的解决方案。已经有一个案例，个人创建了一个“混蛋 SBT ”，这是一种使用与 NFT 相同技术的代币，但可以发送给个人，个人只能通过支付费用才能将其删除。SBT 的这一方面有可能造成巨大伤害，并可能贬低 Web3 的灵魂。</description></item></channel></rss>
