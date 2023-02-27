@@ -1,0 +1,188 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=icon type=image/ico sizes=16x16 href=/icorer_blog/img/favicon.ico><meta property="og:image" content="https://res.cloudinary.com/malloc/image/upload/v1669271757/icorer.com/34047788_pepere.jpg"><title>测试报告：HTTP Post 与 Unix Domain Socket 通信性能对比 | 笔迹-工匠之芯</title><meta name=author content="LB"><meta name=description content="背景描述因工作需求，项目需要在不同的程序语言框架中进行通信，目前对于进程通信的方式，互联网上主要有HTTP请求、IPC通信、Socket通信、共享内存通信，虽然共享内存效率最高，但是对于内存结构的设计与队列维持需要很高的系统实现能力，所以目前我测试了HTTP与Unix Socket这两种通信方案。
+测试环境搭建目前分为HTTP和Unix Socket通信两种测试环境，为了保持测试环境尽量统一，我们请求端用PHP语言、接受信息端用Go语言。
+测试软件使用 Jmeter 4.0
+操作系统：Centos 7
+硬件条件：I5 CPU、8GB内存"><meta name=keywords content="blog,博客,工匠之芯,笔迹-工匠之芯"><meta name=twitter:card content="summary"><meta name=twitter:title content="测试报告：HTTP Post 与 Unix Domain Socket 通信性能对比"><meta name=twitter:description content="背景描述因工作需求，项目需要在不同的程序语言框架中进行通信，目前对于进程通信的方式，互联网上主要有HTTP请求、IPC通信、Socket通信、共享内存通信，虽然共享内存效率最高，但是对于内存结构的设计与队列维持需要很高的系统实现能力，所以目前我测试了HTTP与Unix Socket这两种通信方案。
+测试环境搭建目前分为HTTP和Unix Socket通信两种测试环境，为了保持测试环境尽量统一，我们请求端用PHP语言、接受信息端用Go语言。
+测试软件使用 Jmeter 4.0
+操作系统：Centos 7
+硬件条件：I5 CPU、8GB内存"><meta property="og:title" content="测试报告：HTTP Post 与 Unix Domain Socket 通信性能对比"><meta property="og:description" content="背景描述因工作需求，项目需要在不同的程序语言框架中进行通信，目前对于进程通信的方式，互联网上主要有HTTP请求、IPC通信、Socket通信、共享内存通信，虽然共享内存效率最高，但是对于内存结构的设计与队列维持需要很高的系统实现能力，所以目前我测试了HTTP与Unix Socket这两种通信方案。
+测试环境搭建目前分为HTTP和Unix Socket通信两种测试环境，为了保持测试环境尽量统一，我们请求端用PHP语言、接受信息端用Go语言。
+测试软件使用 Jmeter 4.0
+操作系统：Centos 7
+硬件条件：I5 CPU、8GB内存"><meta property="og:type" content="article"><meta property="og:url" content="https://icorer.com/icorer_blog/posts/test-report-comparison-of-communication-performance-between-http-post-and-unix-domain-socket/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2018-05-28T09:35:18+08:00"><meta property="article:modified_time" content="2018-05-28T09:35:18+08:00"><link rel=stylesheet href=/icorer_blog/css/bootstrap.min.css crossorigin=anonymous><link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css rel=stylesheet type=text/css><link rel=stylesheet href=/icorer_blog/sass/main.css><link rel=stylesheet href=/icorer_blog/zoomjs/zoom.min.css><script src=/icorer_blog/js/lazysizes.min.js></script>
+<link rel=apple-touch-icon sizes=180x180 href=/icorer_blog/apple-touch-icon.png><link rel=manifest href=/icorer_blog/site.webmanifest></head><body><nav class="navbar navbar-default navbar-custom navbar-fixed-top invert"><div class=container-fluid><div class="navbar-header page-scroll"><button type=button class=navbar-toggle>
+<span class=sr-only>Toggle navigation</span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span></button>
+<a class=navbar-brand href=https://icorer.com/icorer_blog/>笔迹-工匠之芯</a></div><div id=huxblog_navbar><div class=navbar-collapse><ul class="nav navbar-nav navbar-right"><li><a href=https://icorer.com title=工匠之芯>工匠之芯</a></li><li><a href=https://icorer.com/icorer_about title=关于我>关于我</a></li><li><a href=https://github.com/gitsrc title=开源仓库>开源仓库</a></li><li class=search-icon><a href=javascript:void(0)><i class="fa fa-search"></i></a></li></ul></div></div></div></nav><script>var $body=document.body,$toggle=document.querySelector(".navbar-toggle"),$navbar=document.querySelector("#huxblog_navbar"),$collapse=document.querySelector(".navbar-collapse"),__HuxNav__={close:function(){$navbar.className=" ",setTimeout(function(){$navbar.className.indexOf("in")<0&&($collapse.style.height="0px")},400)},open:function(){$collapse.style.height="auto",$navbar.className+=" in"}};$toggle.addEventListener("click",function(){$navbar.className.indexOf("in")>0?__HuxNav__.close():__HuxNav__.open()}),document.addEventListener("click",function(e){if(e.target==$toggle)return;if(e.target.className=="icon-bar")return;__HuxNav__.close()})</script><div class=search-page><div class=search-icon-close-container><span class=search-icon-close><i class="fa fa-chevron-down"></i></span></div><div class="search-main container"><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><form></form><input type=text id=search-input placeholder=内容搜索...></form><div id=search-results class=mini-post-list></div></div></div></div></div><style type=text/css>header.intro-header{position:relative;background-image:url('')}</style><header class="intro-header style-text"><div class=header-mask></div><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><div class=post-heading><div class=tags><a class=tag href=/icorer_blog/tags/%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A/ title=测试报告>测试报告</a>
+<a class=tag href=/icorer_blog/tags/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/ title=性能测试>性能测试</a></div><h1>测试报告：HTTP Post 与 Unix Domain Socket 通信性能对比</h1><h2 class=subheading></h2><span class=meta>Posted by LB
+on Mon, May 28, 2018</span></div></div></div></div></header><article><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+post-container"><h2 id=背景描述>背景描述<a class=anchorjs-link href=#%e8%83%8c%e6%99%af%e6%8f%8f%e8%bf%b0></a></h2><p>因工作需求，项目需要在不同的程序语言框架中进行通信，目前对于进程通信的方式，互联网上主要有HTTP请求、IPC通信、Socket通信、共享内存通信，虽然共享内存效率最高，但是对于内存结构的设计与队列维持需要很高的系统实现能力，所以目前我测试了HTTP与Unix Socket这两种通信方案。</p><h2 id=测试环境搭建>测试环境搭建<a class=anchorjs-link href=#%e6%b5%8b%e8%af%95%e7%8e%af%e5%a2%83%e6%90%ad%e5%bb%ba></a></h2><p>目前分为HTTP和Unix Socket通信两种测试环境，为了保持测试环境尽量统一，我们请求端用PHP语言、接受信息端用Go语言。
+测试软件使用 Jmeter 4.0
+操作系统：Centos 7
+硬件条件：I5 CPU、8GB内存</p><h2 id=测试参数>测试参数<a class=anchorjs-link href=#%e6%b5%8b%e8%af%95%e5%8f%82%e6%95%b0></a></h2><ul><li><figure><a class=paragraph-image><img data-src=https://icorer.com/icorer_blog/img/usr/uploads/2018/05/2705269765.png data-action=zoom alt class=lazyload></a></figure></li></ul><h2 id=1-http请求性能测试>1. HTTP请求性能测试<a class=anchorjs-link href=#1-http%e8%af%b7%e6%b1%82%e6%80%a7%e8%83%bd%e6%b5%8b%e8%af%95></a></h2><pre><code>1.1 PHP端的请求代码：
+</code></pre><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-php data-lang=php><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#ff79c6>&lt;?</span>php
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span><span style=color:#ff79c6>global</span> <span style=color:#8be9fd;font-style:italic>$g_handle</span>;
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span><span style=color:#ff79c6>if</span> (<span style=color:#ff79c6>empty</span>(<span style=color:#8be9fd;font-style:italic>$g_handle</span>)) {
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span>    <span style=color:#8be9fd;font-style:italic>$g_handle</span> <span style=color:#ff79c6>=</span> curl_init();
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span>}
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span><span style=color:#8be9fd;font-style:italic>$options</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>array</span>(
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span>    CURLOPT_URL <span style=color:#ff79c6>=&gt;</span> <span style=color:#8be9fd;font-style:italic>$url</span>,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span>    CURLOPT_RETURNTRANSFER <span style=color:#ff79c6>=&gt;</span> <span style=color:#ff79c6>true</span>,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span>    CURLOPT_FRESH_CONNECT <span style=color:#ff79c6>=&gt;</span> <span style=color:#ff79c6>false</span>,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span>    CURLOPT_FORBID_REUSE <span style=color:#ff79c6>=&gt;</span> <span style=color:#ff79c6>false</span>,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span>    CURLOPT_POST <span style=color:#ff79c6>=&gt;</span> <span style=color:#bd93f9>1</span>,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span>    CURLOPT_TIMEOUT <span style=color:#ff79c6>=&gt;</span> <span style=color:#8be9fd;font-style:italic>$timeout</span>,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span>    CURLOPT_POSTFIELDS <span style=color:#ff79c6>=&gt;</span> <span style=color:#f1fa8c>&#34;data=123&#34;</span>,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span>    CURLOPT_HTTPHEADER <span style=color:#ff79c6>=&gt;</span> <span style=color:#ff79c6>array</span>(
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span>        <span style=color:#f1fa8c>&#39;Connection: Keep-Alive&#39;</span>,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span><span>        <span style=color:#f1fa8c>&#39;Keep-Alive: 300&#39;</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span><span>    ),
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span><span>);
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span><span>curl_setopt_array(<span style=color:#8be9fd;font-style:italic>$g_handle</span>, <span style=color:#8be9fd;font-style:italic>$options</span>);
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span><span><span style=color:#8be9fd;font-style:italic>$ret</span> <span style=color:#ff79c6>=</span> curl_exec(<span style=color:#8be9fd;font-style:italic>$g_handle</span>);
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span><span><span style=color:#ff79c6>print</span> <span style=color:#8be9fd;font-style:italic>$ret</span>;
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span><span><span style=color:#ff79c6>?&gt;</span>
+</span></span></code></pre></div><pre><code>1.2 Go语言接受端代码：
+</code></pre><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#ff79c6>package</span> main
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span><span style=color:#ff79c6>import</span> (
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span>	<span style=color:#f1fa8c>&#34;github.com/gin-gonic/gin&#34;</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span>)
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span><span style=color:#8be9fd;font-style:italic>func</span> <span style=color:#50fa7b>main</span>(){
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span>	r <span style=color:#ff79c6>:=</span> gin.<span style=color:#50fa7b>Default</span>()
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span>	r.<span style=color:#50fa7b>POST</span>(<span style=color:#f1fa8c>&#34;/tcp&#34;</span>, <span style=color:#8be9fd;font-style:italic>func</span>(c <span style=color:#ff79c6>*</span>gin.Context) {
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span>		data<span style=color:#ff79c6>:=</span>c.<span style=color:#50fa7b>PostForm</span>(<span style=color:#f1fa8c>&#34;data&#34;</span>);
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span>		c.<span style=color:#50fa7b>JSON</span>(<span style=color:#bd93f9>200</span>,gin.H{
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span>			<span style=color:#f1fa8c>&#34;status&#34;</span>:<span style=color:#f1fa8c>&#34;ok&#34;</span>,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span>			<span style=color:#f1fa8c>&#34;data&#34;</span>:data,
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span>		})
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span>	})
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span>	r.<span style=color:#50fa7b>Run</span>() <span style=color:#6272a4>// listen and serve on 0.0.0.0:8080
+</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span><span><span style=color:#6272a4></span>}
+</span></span></code></pre></div><pre><code>1.3 测试结果：
+</code></pre><ul><li>聚合报告：<figure><a class=paragraph-image><img data-src=https://icorer.com/icorer_blog/img/usr/uploads/2018/05/1039193191.png data-action=zoom alt class=lazyload></a></figure></li><li>图形结果：<figure><a class=paragraph-image><img data-src=https://icorer.com/icorer_blog/img/usr/uploads/2018/05/3988143680.png data-action=zoom alt class=lazyload></a></figure></li></ul><h2 id=2-unix-socket-请求性能测试>2. UNIX SOCKET 请求性能测试<a class=anchorjs-link href=#2-unix-socket-%e8%af%b7%e6%b1%82%e6%80%a7%e8%83%bd%e6%b5%8b%e8%af%95></a></h2><pre><code>2.1 PHP端的请求代码：
+</code></pre><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-php data-lang=php><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#ff79c6>&lt;?</span>php
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span><span style=color:#8be9fd;font-style:italic>$msg</span> <span style=color:#ff79c6>=</span> time()<span style=color:#ff79c6>.</span><span style=color:#f1fa8c>&#34;&#34;</span>;
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span><span style=color:#6272a4>// 创建 连接 发送消息 接收响应 关闭连接
+</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span><span style=color:#6272a4></span><span style=color:#8be9fd;font-style:italic>$socket</span> <span style=color:#ff79c6>=</span> socket_create(AF_UNIX, SOCK_STREAM, <span style=color:#bd93f9>0</span>);
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span>socket_connect(<span style=color:#8be9fd;font-style:italic>$socket</span>, <span style=color:#f1fa8c>&#39;/tmp/keyword_match.sock&#39;</span>);
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span>socket_send(<span style=color:#8be9fd;font-style:italic>$socket</span>, <span style=color:#8be9fd;font-style:italic>$msg</span>, strlen(<span style=color:#8be9fd;font-style:italic>$msg</span>), <span style=color:#bd93f9>0</span>);
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span><span style=color:#8be9fd;font-style:italic>$response</span> <span style=color:#ff79c6>=</span> socket_read(<span style=color:#8be9fd;font-style:italic>$socket</span>, <span style=color:#bd93f9>1024</span>);
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span><span style=color:#6272a4>//socket_close($socket);
+</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span><span style=color:#6272a4></span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span>var_dump(<span style=color:#8be9fd;font-style:italic>$response</span>);
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span><span style=color:#ff79c6>?&gt;</span>
+</span></span></code></pre></div><pre><code>1.2 Go语言接受端代码：
+</code></pre><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#ff79c6>package</span> main
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span><span style=color:#ff79c6>import</span> (
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span>	<span style=color:#f1fa8c>&#34;net&#34;</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span>	<span style=color:#f1fa8c>&#34;syscall&#34;</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span>	<span style=color:#f1fa8c>&#34;time&#34;</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span>	<span style=color:#f1fa8c>&#34;fmt&#34;</span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span>)
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span><span style=color:#8be9fd;font-style:italic>func</span> <span style=color:#50fa7b>main</span>(){
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span>	<span style=color:#6272a4>// 创建一个Unix domain soceket
+</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span><span style=color:#6272a4></span>	socket, _ <span style=color:#ff79c6>:=</span> net.<span style=color:#50fa7b>Listen</span>(<span style=color:#f1fa8c>&#34;unix&#34;</span>, <span style=color:#f1fa8c>&#34;/tmp/keyword_match.sock&#34;</span>)
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span>	<span style=color:#6272a4>// 关闭时删除绑定的文件
+</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span><span style=color:#6272a4></span>	<span style=color:#ff79c6>defer</span> syscall.<span style=color:#50fa7b>Unlink</span>(<span style=color:#f1fa8c>&#34;/tmp/keyword_match.sock&#34;</span>)
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span>	<span style=color:#6272a4>// 无限循环监听和受理客户端请求
+</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span><span style=color:#6272a4></span>	
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span><span>	<span style=color:#ff79c6>for</span> {
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span><span>		client, _ <span style=color:#ff79c6>:=</span> socket.<span style=color:#50fa7b>Accept</span>()
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span>		buf <span style=color:#ff79c6>:=</span> <span style=color:#8be9fd;font-style:italic>make</span>([]<span style=color:#8be9fd>byte</span>, <span style=color:#bd93f9>1024</span>)
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span><span>		data_len, _ <span style=color:#ff79c6>:=</span> client.<span style=color:#50fa7b>Read</span>(buf)
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span><span>		data <span style=color:#ff79c6>:=</span> buf[<span style=color:#bd93f9>0</span>:data_len]
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span><span>		_, _ = client.<span style=color:#50fa7b>Write</span>(data)
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span><span>	}
+</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span><span>}
+</span></span></code></pre></div><pre><code>2.3 测试结果：
+</code></pre><ul><li>聚合报告：<figure><a class=paragraph-image><img data-src=https://icorer.com/icorer_blog/img/usr/uploads/2018/05/3019979846.png data-action=zoom alt class=lazyload></a></figure></li><li>图形结果：<figure><a class=paragraph-image><img data-src=https://icorer.com/icorer_blog/img/usr/uploads/2018/05/3678864643.png data-action=zoom alt class=lazyload></a></figure></li></ul><h2 id=评测总结>评测总结<a class=anchorjs-link href=#%e8%af%84%e6%b5%8b%e6%80%bb%e7%bb%93></a></h2><pre><code>总体来说，Unix Socket优于HTTP</code></pre><hr style=visibility:hidden><ul class=pager><li class=previous><a href=/icorer_blog/posts/jmeter-test-report-related-parameter-description/ data-toggle=tooltip data-placement=top title=Jmeter测试报表相关参数说明>Previous<br><span>Jmeter测试报表相关参数说明</span></a></li><li class=next><a href=/icorer_blog/posts/pecl_http-and-unix-domain-socket-client-package/ data-toggle=tooltip data-placement=top title="Pecl_Http 与 unix domain socket 客户端封装">Next<br><span>Pecl_Http 与 unix domain socket 客户端封装</span></a></li></ul><hr style=visibility:hidden></div><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+sidebar-container"><section><hr class="hidden-sm hidden-xs"><h5>FEATURED TAGS</h5><div class=tags><a href=/icorer_blog/tags/blockchain/>blockchain</a>
+<a href=/icorer_blog/tags/clang/>CLang</a>
+<a href=/icorer_blog/tags/cloudnative/>cloudnative</a>
+<a href=/icorer_blog/tags/cmake/>Cmake</a>
+<a href=/icorer_blog/tags/deca/>DeCA</a>
+<a href=/icorer_blog/tags/dpki/>DPKI</a>
+<a href=/icorer_blog/tags/drand/>drand</a>
+<a href=/icorer_blog/tags/eip/>EIP</a>
+<a href=/icorer_blog/tags/epoll/>epoll</a>
+<a href=/icorer_blog/tags/ethereum/>Ethereum</a>
+<a href=/icorer_blog/tags/fpga/>FPGA</a>
+<a href=/icorer_blog/tags/gc/>GC</a>
+<a href=/icorer_blog/tags/golang/>GoLang</a>
+<a href=/icorer_blog/tags/hackathon/>Hackathon</a>
+<a href=/icorer_blog/tags/http2/>HTTP2</a>
+<a href=/icorer_blog/tags/http3/>HTTP3</a>
+<a href=/icorer_blog/tags/icefiredb/>IceFireDB</a>
+<a href=/icorer_blog/tags/k8s/>k8s</a>
+<a href=/icorer_blog/tags/kafka/>kafka</a>
+<a href=/icorer_blog/tags/layer2/>Layer2</a>
+<a href=/icorer_blog/tags/linux/>linux</a>
+<a href=/icorer_blog/tags/nginx/>Nginx</a>
+<a href=/icorer_blog/tags/nosql/>NoSQL</a>
+<a href=/icorer_blog/tags/php/>PHP</a>
+<a href=/icorer_blog/tags/php-kernel/>php kernel</a>
+<a href=/icorer_blog/tags/php%E5%86%85%E6%A0%B8/>PHP内核</a>
+<a href=/icorer_blog/tags/quic/>QUIC</a>
+<a href=/icorer_blog/tags/redis/>redis</a>
+<a href=/icorer_blog/tags/sbt/>SBT</a>
+<a href=/icorer_blog/tags/serverless/>serverless</a>
+<a href=/icorer_blog/tags/ssi/>SSI</a>
+<a href=/icorer_blog/tags/unikernel/>unikernel</a>
+<a href=/icorer_blog/tags/wanxiang/>Wanxiang</a>
+<a href=/icorer_blog/tags/web3/>web3</a>
+<a href=/icorer_blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/>中间件</a>
+<a href=/icorer_blog/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/>云原生</a>
+<a href=/icorer_blog/tags/%E4%BB%A5%E5%A4%AA%E5%9D%8A/>以太坊</a>
+<a href=/icorer_blog/tags/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/>信息安全</a>
+<a href=/icorer_blog/tags/%E5%86%85%E5%AD%98%E6%95%B0%E6%8D%AE%E5%BA%93/>内存数据库</a>
+<a href=/icorer_blog/tags/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/>内存泄漏</a>
+<a href=/icorer_blog/tags/%E5%86%85%E6%A0%B8%E6%BA%90%E7%A0%81/>内核源码</a>
+<a href=/icorer_blog/tags/%E5%86%85%E6%A0%B8%E7%A0%94%E7%A9%B6/>内核研究</a>
+<a href=/icorer_blog/tags/%E5%8C%BA%E5%9D%97%E9%93%BE/>区块链</a>
+<a href=/icorer_blog/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/>垃圾回收</a>
+<a href=/icorer_blog/tags/%E5%AD%98%E5%82%A8/>存储</a>
+<a href=/icorer_blog/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E5%BC%80%E5%8F%91/>底层开发</a>
+<a href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/>底层研究</a>
+<a href=/icorer_blog/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/>开源项目</a>
+<a href=/icorer_blog/tags/%E5%BC%82%E6%9E%84%E8%AE%A1%E7%AE%97/>异构计算</a>
+<a href=/icorer_blog/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/>微服务</a>
+<a href=/icorer_blog/tags/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/>性能测试</a>
+<a href=/icorer_blog/tags/%E6%8A%80%E6%9C%AF%E7%A7%91%E6%99%AE/>技术科普</a>
+<a href=/icorer_blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8A%80%E6%9C%AF/>数据库技术</a>
+<a href=/icorer_blog/tags/%E6%96%87%E7%AB%A0%E7%BF%BB%E8%AF%91/>文章翻译</a>
+<a href=/icorer_blog/tags/%E6%96%B0%E6%9E%B6%E6%9E%84/>新架构</a>
+<a href=/icorer_blog/tags/%E6%97%B6%E5%BA%8F%E6%95%B0%E6%8D%AE%E5%BA%93/>时序数据库</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/>服务治理</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC/>服务网格</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E9%81%A5%E6%B5%8B/>服务遥测</a>
+<a href=/icorer_blog/tags/%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A/>测试报告</a>
+<a href=/icorer_blog/tags/%E7%A0%94%E7%A9%B6%E6%8A%A5%E5%91%8A/>研究报告</a>
+<a href=/icorer_blog/tags/%E7%BC%93%E5%AD%98%E6%8A%80%E6%9C%AF/>缓存技术</a>
+<a href=/icorer_blog/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/>网络安全</a>
+<a href=/icorer_blog/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/>虚拟机</a>
+<a href=/icorer_blog/tags/%E8%A1%8C%E4%B8%9A%E6%8A%A5%E5%91%8A/>行业报告</a>
+<a href=/icorer_blog/tags/%E8%AE%BA%E6%96%87/>论文</a>
+<a href=/icorer_blog/tags/%E9%9B%B6%E4%BF%A1%E4%BB%BB/>零信任</a>
+<a href=/icorer_blog/tags/%E9%AB%98%E6%80%A7%E8%83%BD/>高性能</a></div></section></div></div></div></article><footer><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><ul class="list-inline text-center"><li><a href=/icorer_blog/index.xml><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-rss fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://twitter.com/corerman1><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-twitter fa-stack-1x fa-inverse"></i></span></a></li><li><a target=_blank href=https://github.com/gitsrc><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-github fa-stack-1x fa-inverse"></i></span></a></li></ul><p class="copyright text-muted">Copyright &copy; 笔迹-工匠之芯 2023</p></div></div></div></footer><script src=/icorer_blog/js/jquery.min.js></script>
+<script src=/icorer_blog/js/bootstrap.min.js crossorigin=anonymous></script>
+<script src=/icorer_blog/js/hux-blog.min.c4ea77041cd3edbfc8b2622cd887a9a5d8760a4162d14489e36d2a3fa4c90172.js></script>
+<script src=/icorer_blog/js/simple-jekyll-search.min.js></script>
+<script src=/icorer_blog/js/search.min.7d1445cf07369bca2715d9f63738c16c73a7a2273a95d6729bee561f7e84c6c8.js></script>
+<script src=/icorer_blog/zoomjs/zoom.min.js></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VB37D8LWFT"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-VB37D8LWFT")</script></body></html>
