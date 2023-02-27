@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>PulseFlow插件端 on 工匠之芯-文档中心</title><link>https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/</link><description>Recent content in PulseFlow插件端 on 工匠之芯-文档中心</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><atom:link href="https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/index.xml" rel="self" type="application/rss+xml"/><item><title>2.1 扩展总览</title><link>https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/2.1/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/2.1/</guid><description>一. 组件概述 # PulseFLow插件端主要完成下面两个方面的功能。 # 1.1 拦截PHP执行过程 （保障高效） # PulseFlow的第一个部分是PHP扩展，这个PHP扩展的主要功能是拦截PHP脚本在执行过程中的运行信息。目前拦截的信息包括：
+函数名及类名
+函数执行耗时
+函数执行的内存损耗
+函数执行的次数统计
+上述的四个指标均指在一个PHP生命周期内。
+在拦截执行信息的过程中，为了保障高效率，我们先后调整了两次数据结构，最终在简易的数据结构基础上，借助全局变量的威力，去除了序列化和反序列化过程，大大提高了信息采集的效率。
+1.2 发送拦截的性能信息（保障高效稳定） # 在 1.1 节中，我们介绍了扩展拦截了一系列的运行信息，但是还需要发送出去这个环节，如何既快速又稳定地和信息接收端通信，我们测试了以下方案。
+System V Message Queue
+Posix Message Queue
+Unix Domain Socket
+Zero MQ
+NanoMsg
+Shared Memory
+我们在详尽测试了上述六种方案后，为了保证稳定性、系统搭建的简易性，我们选择了既安全又快速的System V Message Queue。
+这是一种 Linux 内核消息队列，速度仅次于共享内存通信，虽然没有共享内存速度快，但是具有很好的安全性 和 队列性，毕竟是线上产品，所以我们在1.0版本中采用此方案。（但是我们保留了共享内存代码分支，后期共享内存版本稳定后再另行推出。）</description></item><item><title>2.2 数据结构</title><link>https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/2.2/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/2.2/</guid><description>二. 数据结构 # 思来想去，要把这个扩展目前的功能阐述完全，首先我们来描述一下相关数据结构。
+数据结构是扩展运行的基石，如何构造简单的数据结构，既能完整记录相关数据，又能够减少数据查询次数和提高数据进程间传输的便利性。
+2.1 数据结构要求 # 在设计扩展的数据结构时，我们需要保障以下几点。
+数据结构足够简单，便于代码阅读。
+数据结构具有较高效能，最多容忍O(n)复杂度。
+数据结构要便于传输，由于牵扯到IPC通信，所以这个部分特别重要。
+在这基础上，我们设计了三类数据结构，包括：进程全局变量、SVIPC_Func_Struct 和 Function_Prof_Struct 。
+2.2 进程全局变量 # 由于目前我们的进程模型是PHP-FPM，每一个PHP-FPM进程拥有一份独立的全局变量区域，全局变量主要围绕以下几个方面来设计。
+INI配置文件加载变量
+全局数据结构数据
+数据1主要在PHP的 MI生命期阶段进行加载INI配置文件选项，数据2主要是为了完成插件功能而开辟的全局变量。
+2.2.1 扩展配置参数 # 变量名 INI文件配置对应名称 默认值 含义 enabled PulseFlow.enabled false 是否启用插件？ disable_trace_functions PulseFlow.disable_trace_functions 空字符串 禁止跟踪的函数名列表（逗号分割） disable_trace_class PulseFlow.disable_trace_class 空字符串 禁止跟踪的类名列表（逗号分割） svipc_name PulseFlow.svipc_name /PulseFlow_sv_ipc System V IPC 所需要的文件路径名 svipc_gj_id PulseFlow.svipc_pj_id 1000 System V IPC 所需要的项目ID max_package_size PulseFlow.max_package_size 0 组件内部允许的最大消息队列发包大小，超过这个大小进行分包发送 log_dir PulseFlow.log_dir 空字符串 Plugin Log Dir ( 如果此参数不为空，则开启插件日志记录，目前只会记录必要日志信息 ) sampling_rate PulseFlow.</description></item><item><title>2.4 日志功能</title><link>https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/2.4/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/2.4/</guid><description/></item><item><title>2.3 功能流程</title><link>https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/2.3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://icorer.com/icorer_docs/doccenter/pulseflow/pulgin_designed/2.3/</guid><description/></item></channel></rss>
