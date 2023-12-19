@@ -1,0 +1,135 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=icon type=image/ico sizes=16x16 href=https://icorer.com/icorer_blog/posts/zerotrust/imgs/13-must-have-features-to-adopting-a-zero-trust-model/1.png><meta property="og:image" content="https://icorer.com/icorer_blog/posts/zerotrust/imgs/13-must-have-features-to-adopting-a-zero-trust-model/1.png"><title>采用零信任模型的13个必备功能 | 笔迹-工匠之芯</title>
+<meta name=author content="LB"><meta name=description content=" 处理服务网格安全性的最佳方法是采用零信任模型，这意味着每个连接，无论其来源如何，都必须经过验证和保护。为了帮助您评估服务网格技术并实施零信任安全，我们展示了13个必备功能，以确保您的应用程序连接安全。
+1. 传输层安全性（TLS 和 mTLS）提供端到端加密以保护任何一对端点之间的移动数据。它可能是最基本的组件，但令人惊讶的是并非所有服务网格都完全支持双向 TLS。 2.授权例如，Open Policy Agent (OPA) 将服务 API 策略定义为代码。授权是身份验证的另一面，一旦您验证了他们的身份，便可以控制谁可以访问哪些资源。
+3.证书管理从集中式平台控制和执行 SSL 证书以验证连接。证书轮换可能是一个痛苦的管理步骤，应该从容应对。这应该是可扩展的以支持外部权限，这意味着它将与您已经使用的企业身份和访问管理解决方案一起工作。
+4.基于角色的联合出入控制(RBAC)和委托向用户授予与其职责相适应的权限，并再次在所有地方始终如一地应用此权限。这些控制可以应用于不同级别的操作员管理服务网格，也适用于构建在网格中运行的应用程序的开发人员。
+5.联合信任域跨环境安全地验证用户和应用程序，在任何地方一致地扩展验证策略。否则，您将花费大量精力尝试保持各种角色的更新和同步——并且可能会犯一些错误。
+6.联邦信息处理标准 (FIP) 140-2意味着您的服务网格技术已经过验证，可以满足美国政府制定的特定严格安全标准。有许多政府法规和行业最佳实践，但 FIPS 是一种常用的安全基准方法。
+7.多租户和隔离让服务网格中的用户和应用程序安全地共享资源。拥有 RBAC 后，您可以安全地定义谁可以触摸什么，并有效地为不同角色创建隔离的工作区。 服务网格的授权策略也可用于防止不需要的流量到达您的应用程序。
+8. 内置 Web 应用程序防火墙 (WAF)筛选入站流量中的威胁并阻止攻击渗透到您的边界。对于任何暴露在互联网上的边缘网关来说，它对于传入的用户和应用程序连接请求都是必不可少的,WAF除了边界网关模型，还需要内置进入各类端点程序，让WAF可以增强东西流量应用层的安全性。
+9.数据丢失防护 (DLP)监控数据泄露或泄露，以防止数据丢失和数据泄漏。如果您的应用程序以某种方式受到损害，您不希望数据逃离您的边界。
+10.与机密管理集成对于管理密码、安全令牌和加密密钥等敏感凭证的 Kubernetes。您会惊奇地发现这些信息仍然被硬编码到应用程序中或以纯文本形式存储的频率。
+11.多集群访问可观察性提供整个系统所有活动的完整日志聚合和可审计性。这对于事件发生后的实时监控和取证都非常有用。对于分布式应用程序，有必要获得一个整体视图。许多人使用 Prometheus 和 Grafana 等开源工具来实现可观察性。 12.漏洞扫描和发布查找、解决和警告系统中的任何弱点。安全性取决于其最薄弱的环节，因此检查您的防御措施是否存在漏洞非常重要。 13.集群中继的安全拉取模型在整个系统中安全地共享配置。这非常微妙，但您希望确保任何配置更改都在请求时分发到边缘，并且仅在请求时分发。
+附录 What is mtls The zero trust authorization core What is Certificate Management RBAC vs. ABAC: What’s the Difference Creating Federation Trust between organizations FIPS 140-2 OWASP Coraza WAF Web application firewall (WAF) What is DLP "><meta name=keywords content="blog,博客,工匠之芯,笔迹-工匠之芯"><meta name=twitter:card content="summary"><meta name=twitter:title content="采用零信任模型的13个必备功能"><meta name=twitter:description content=" 处理服务网格安全性的最佳方法是采用零信任模型，这意味着每个连接，无论其来源如何，都必须经过验证和保护。为了帮助您评估服务网格技术并实施零信任安全，我们展示了13个必备功能，以确保您的应用程序连接安全。
+1. 传输层安全性（TLS 和 mTLS）提供端到端加密以保护任何一对端点之间的移动数据。它可能是最基本的组件，但令人惊讶的是并非所有服务网格都完全支持双向 TLS。 2.授权例如，Open Policy Agent (OPA) 将服务 API 策略定义为代码。授权是身份验证的另一面，一旦您验证了他们的身份，便可以控制谁可以访问哪些资源。
+3.证书管理从集中式平台控制和执行 SSL 证书以验证连接。证书轮换可能是一个痛苦的管理步骤，应该从容应对。这应该是可扩展的以支持外部权限，这意味着它将与您已经使用的企业身份和访问管理解决方案一起工作。
+4.基于角色的联合出入控制(RBAC)和委托向用户授予与其职责相适应的权限，并再次在所有地方始终如一地应用此权限。这些控制可以应用于不同级别的操作员管理服务网格，也适用于构建在网格中运行的应用程序的开发人员。
+5.联合信任域跨环境安全地验证用户和应用程序，在任何地方一致地扩展验证策略。否则，您将花费大量精力尝试保持各种角色的更新和同步——并且可能会犯一些错误。
+6.联邦信息处理标准 (FIP) 140-2意味着您的服务网格技术已经过验证，可以满足美国政府制定的特定严格安全标准。有许多政府法规和行业最佳实践，但 FIPS 是一种常用的安全基准方法。
+7.多租户和隔离让服务网格中的用户和应用程序安全地共享资源。拥有 RBAC 后，您可以安全地定义谁可以触摸什么，并有效地为不同角色创建隔离的工作区。 服务网格的授权策略也可用于防止不需要的流量到达您的应用程序。
+8. 内置 Web 应用程序防火墙 (WAF)筛选入站流量中的威胁并阻止攻击渗透到您的边界。对于任何暴露在互联网上的边缘网关来说，它对于传入的用户和应用程序连接请求都是必不可少的,WAF除了边界网关模型，还需要内置进入各类端点程序，让WAF可以增强东西流量应用层的安全性。
+9.数据丢失防护 (DLP)监控数据泄露或泄露，以防止数据丢失和数据泄漏。如果您的应用程序以某种方式受到损害，您不希望数据逃离您的边界。
+10.与机密管理集成对于管理密码、安全令牌和加密密钥等敏感凭证的 Kubernetes。您会惊奇地发现这些信息仍然被硬编码到应用程序中或以纯文本形式存储的频率。
+11.多集群访问可观察性提供整个系统所有活动的完整日志聚合和可审计性。这对于事件发生后的实时监控和取证都非常有用。对于分布式应用程序，有必要获得一个整体视图。许多人使用 Prometheus 和 Grafana 等开源工具来实现可观察性。 12.漏洞扫描和发布查找、解决和警告系统中的任何弱点。安全性取决于其最薄弱的环节，因此检查您的防御措施是否存在漏洞非常重要。 13.集群中继的安全拉取模型在整个系统中安全地共享配置。这非常微妙，但您希望确保任何配置更改都在请求时分发到边缘，并且仅在请求时分发。
+附录 What is mtls The zero trust authorization core What is Certificate Management RBAC vs. ABAC: What’s the Difference Creating Federation Trust between organizations FIPS 140-2 OWASP Coraza WAF Web application firewall (WAF) What is DLP "><meta name=twitter:site content="@lb_icefirelabs"><meta property="og:title" content="采用零信任模型的13个必备功能"><meta property="og:description" content=" 处理服务网格安全性的最佳方法是采用零信任模型，这意味着每个连接，无论其来源如何，都必须经过验证和保护。为了帮助您评估服务网格技术并实施零信任安全，我们展示了13个必备功能，以确保您的应用程序连接安全。
+1. 传输层安全性（TLS 和 mTLS）提供端到端加密以保护任何一对端点之间的移动数据。它可能是最基本的组件，但令人惊讶的是并非所有服务网格都完全支持双向 TLS。 2.授权例如，Open Policy Agent (OPA) 将服务 API 策略定义为代码。授权是身份验证的另一面，一旦您验证了他们的身份，便可以控制谁可以访问哪些资源。
+3.证书管理从集中式平台控制和执行 SSL 证书以验证连接。证书轮换可能是一个痛苦的管理步骤，应该从容应对。这应该是可扩展的以支持外部权限，这意味着它将与您已经使用的企业身份和访问管理解决方案一起工作。
+4.基于角色的联合出入控制(RBAC)和委托向用户授予与其职责相适应的权限，并再次在所有地方始终如一地应用此权限。这些控制可以应用于不同级别的操作员管理服务网格，也适用于构建在网格中运行的应用程序的开发人员。
+5.联合信任域跨环境安全地验证用户和应用程序，在任何地方一致地扩展验证策略。否则，您将花费大量精力尝试保持各种角色的更新和同步——并且可能会犯一些错误。
+6.联邦信息处理标准 (FIP) 140-2意味着您的服务网格技术已经过验证，可以满足美国政府制定的特定严格安全标准。有许多政府法规和行业最佳实践，但 FIPS 是一种常用的安全基准方法。
+7.多租户和隔离让服务网格中的用户和应用程序安全地共享资源。拥有 RBAC 后，您可以安全地定义谁可以触摸什么，并有效地为不同角色创建隔离的工作区。 服务网格的授权策略也可用于防止不需要的流量到达您的应用程序。
+8. 内置 Web 应用程序防火墙 (WAF)筛选入站流量中的威胁并阻止攻击渗透到您的边界。对于任何暴露在互联网上的边缘网关来说，它对于传入的用户和应用程序连接请求都是必不可少的,WAF除了边界网关模型，还需要内置进入各类端点程序，让WAF可以增强东西流量应用层的安全性。
+9.数据丢失防护 (DLP)监控数据泄露或泄露，以防止数据丢失和数据泄漏。如果您的应用程序以某种方式受到损害，您不希望数据逃离您的边界。
+10.与机密管理集成对于管理密码、安全令牌和加密密钥等敏感凭证的 Kubernetes。您会惊奇地发现这些信息仍然被硬编码到应用程序中或以纯文本形式存储的频率。
+11.多集群访问可观察性提供整个系统所有活动的完整日志聚合和可审计性。这对于事件发生后的实时监控和取证都非常有用。对于分布式应用程序，有必要获得一个整体视图。许多人使用 Prometheus 和 Grafana 等开源工具来实现可观察性。 12.漏洞扫描和发布查找、解决和警告系统中的任何弱点。安全性取决于其最薄弱的环节，因此检查您的防御措施是否存在漏洞非常重要。 13.集群中继的安全拉取模型在整个系统中安全地共享配置。这非常微妙，但您希望确保任何配置更改都在请求时分发到边缘，并且仅在请求时分发。
+附录 What is mtls The zero trust authorization core What is Certificate Management RBAC vs. ABAC: What’s the Difference Creating Federation Trust between organizations FIPS 140-2 OWASP Coraza WAF Web application firewall (WAF) What is DLP "><meta property="og:type" content="article"><meta property="og:url" content="https://icorer.com/icorer_blog/posts/zerotrust/13-must-have-features-to-adopting-a-zero-trust-model/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2022-12-11T11:55:18+08:00"><meta property="article:modified_time" content="2022-12-11T11:55:18+08:00"><link rel=stylesheet href=/icorer_blog/css/bootstrap.min.css crossorigin=anonymous><link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css rel=stylesheet type=text/css><link rel=stylesheet href=/icorer_blog/sass/main.css><link rel=stylesheet href=/icorer_blog/zoomjs/zoom.min.css><script src=/icorer_blog/js/lazysizes.min.js></script><link rel=apple-touch-icon sizes=180x180 href=/icorer_blog/apple-touch-icon.png><link rel=manifest href=/icorer_blog/site.webmanifest></head><body><nav class="navbar navbar-default navbar-custom navbar-fixed-top invert"><div class=container-fluid><div class="navbar-header page-scroll"><button type=button class=navbar-toggle>
+<span class=sr-only>Toggle navigation</span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+</button>
+<a class=navbar-brand href=https://icorer.com/icorer_blog/>笔迹-工匠之芯</a></div><div id=huxblog_navbar><div class=navbar-collapse><ul class="nav navbar-nav navbar-right"><li><a href=https://icorer.com title=工匠之芯>工匠之芯</a></li><li><a href=https://icorer.com/icorer_about title=关于我>关于我</a></li><li><a href=https://github.com/gitsrc title=开源仓库>开源仓库</a></li><li class=search-icon><a href=javascript:void(0)><i class="fa fa-search"></i></a></li></ul></div></div></div></nav><script>var $body=document.body,$toggle=document.querySelector(".navbar-toggle"),$navbar=document.querySelector("#huxblog_navbar"),$collapse=document.querySelector(".navbar-collapse"),__HuxNav__={close:function(){$navbar.className=" ",setTimeout(function(){$navbar.className.indexOf("in")<0&&($collapse.style.height="0px")},400)},open:function(){$collapse.style.height="auto",$navbar.className+=" in"}};$toggle.addEventListener("click",function(){$navbar.className.indexOf("in")>0?__HuxNav__.close():__HuxNav__.open()}),document.addEventListener("click",function(e){if(e.target==$toggle)return;if(e.target.className=="icon-bar")return;__HuxNav__.close()})</script><div class=search-page><div class=search-icon-close-container><span class=search-icon-close><i class="fa fa-chevron-down"></i></span></div><div class="search-main container"><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><form></form><input type=text id=search-input placeholder=内容搜索...></form><div id=search-results class=mini-post-list></div></div></div></div></div><style type=text/css>header.intro-header{position:relative;background-image:url('')}</style><header class="intro-header style-text"><div class=header-mask></div><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><div class=post-heading><div class=tags><a class=tag href=/icorer_blog/tags/%E9%9B%B6%E4%BF%A1%E4%BB%BB/ title=零信任>零信任</a>
+<a class=tag href=/icorer_blog/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/ title=云原生>云原生</a>
+<a class=tag href=/icorer_blog/tags/cloudnative/ title=cloudnative>cloudnative</a>
+<a class=tag href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/ title=底层研究>底层研究</a>
+<a class=tag href=/icorer_blog/tags/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/ title=信息安全>信息安全</a>
+<a class=tag href=/icorer_blog/tags/%E8%A1%8C%E4%B8%9A%E6%8A%A5%E5%91%8A/ title=行业报告>行业报告</a></div><h1>采用零信任模型的13个必备功能</h1><h2 class=subheading></h2><span class=meta>Posted by LB
+on Sun, Dec 11, 2022</span></div></div></div></div></header><article><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+post-container"><p><figure><a class=paragraph-image><img data-src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/1.png data-action=zoom alt=zerotrust class=lazyload></a></figure></p><p>处理服务网格安全性的最佳方法是采用零信任模型，这意味着每个连接，无论其来源如何，都必须经过验证和保护。为了帮助您评估服务网格技术并实施零信任安全，我们展示了13个必备功能，以确保您的应用程序连接安全。</p><h2 id=1-传输层安全性tls-和-mtls>1. 传输层安全性（TLS 和 mTLS）<a class=anchorjs-link href=#1-%e4%bc%a0%e8%be%93%e5%b1%82%e5%ae%89%e5%85%a8%e6%80%a7tls-%e5%92%8c-mtls></a></h2><p>提供端到端加密以保护任何一对端点之间的移动数据。它可能是最基本的组件，但令人惊讶的是并非所有服务网格都完全支持双向 TLS。
+<img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/mutual-tls.png style=width:70%></p><h2 id=2授权>2.授权<a class=anchorjs-link href=#2%e6%8e%88%e6%9d%83></a></h2><p>例如，Open Policy Agent (OPA) 将服务 API 策略定义为代码。授权是身份验证的另一面，一旦您验证了他们的身份，便可以控制谁可以访问哪些资源。</p><img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/zta.jpg style=width:70%><h2 id=3证书管理>3.证书管理<a class=anchorjs-link href=#3%e8%af%81%e4%b9%a6%e7%ae%a1%e7%90%86></a></h2><p>从集中式平台控制和执行 SSL 证书以验证连接。证书轮换可能是一个痛苦的管理步骤，应该从容应对。这应该是可扩展的以支持外部权限，这意味着它将与您已经使用的企业身份和访问管理解决方案一起工作。</p><img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/Stages-of-Certificate-Lifecycle-Management.png style=width:60%><h2 id=4基于角色的联合出入控制rbac和委托>4.基于角色的联合出入控制(RBAC)和委托<a class=anchorjs-link href=#4%e5%9f%ba%e4%ba%8e%e8%a7%92%e8%89%b2%e7%9a%84%e8%81%94%e5%90%88%e5%87%ba%e5%85%a5%e6%8e%a7%e5%88%b6rbac%e5%92%8c%e5%a7%94%e6%89%98></a></h2><p>向用户授予与其职责相适应的权限，并再次在所有地方始终如一地应用此权限。这些控制可以应用于不同级别的操作员管理服务网格，也适用于构建在网格中运行的应用程序的开发人员。</p><img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/role-based-access-control-1024x536.jpg style=width:90%><h2 id=5联合信任域>5.联合信任域<a class=anchorjs-link href=#5%e8%81%94%e5%90%88%e4%bf%a1%e4%bb%bb%e5%9f%9f></a></h2><p>跨环境安全地验证用户和应用程序，在任何地方一致地扩展验证策略。否则，您将花费大量精力尝试保持各种角色的更新和同步——并且可能会犯一些错误。</p><img src="../imgs/13-must-have-features-to-adopting-a-zero-trust-model/Creating Federation Trust between organizations.png" style=width:80%><h2 id=6联邦信息处理标准-fip-140-2>6.联邦信息处理标准 (FIP) 140-2<a class=anchorjs-link href=#6%e8%81%94%e9%82%a6%e4%bf%a1%e6%81%af%e5%a4%84%e7%90%86%e6%a0%87%e5%87%86-fip-140-2></a></h2><p>意味着您的服务网格技术已经过验证，可以满足美国政府制定的特定严格安全标准。有许多政府法规和行业最佳实践，但 FIPS 是一种常用的安全基准方法。</p><img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/FIPS-140-2-Requirements-850x334.png style=width:80%><h2 id=7多租户和隔离>7.多租户和隔离<a class=anchorjs-link href=#7%e5%a4%9a%e7%a7%9f%e6%88%b7%e5%92%8c%e9%9a%94%e7%a6%bb></a></h2><p>让服务网格中的用户和应用程序安全地共享资源。拥有 RBAC 后，您可以安全地定义谁可以触摸什么，并有效地为不同角色创建隔离的工作区。 服务网格的授权策略也可用于防止不需要的流量到达您的应用程序。</p><img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/single-tenant-vs.-multitenant-infographic.png style=width:70%><h2 id=8-内置-web-应用程序防火墙-waf>8. 内置 Web 应用程序防火墙 (WAF)<a class=anchorjs-link href=#8-%e5%86%85%e7%bd%ae-web-%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e9%98%b2%e7%81%ab%e5%a2%99-waf></a></h2><p>筛选入站流量中的威胁并阻止攻击渗透到您的边界。对于任何暴露在互联网上的边缘网关来说，它对于传入的用户和应用程序连接请求都是必不可少的,WAF除了边界网关模型，还需要内置进入各类端点程序，让WAF可以增强东西流量应用层的安全性。</p><img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/How-Does-WAF-Work.png style=width:80%><h2 id=9数据丢失防护-dlp>9.数据丢失防护 (DLP)<a class=anchorjs-link href=#9%e6%95%b0%e6%8d%ae%e4%b8%a2%e5%a4%b1%e9%98%b2%e6%8a%a4-dlp></a></h2><p>监控数据泄露或泄露，以防止数据丢失和数据泄漏。如果您的应用程序以某种方式受到损害，您不希望数据逃离您的边界。</p><img src="../imgs/13-must-have-features-to-adopting-a-zero-trust-model/60757d2ece377b4c70a6e0b1_benefits dlp.jpeg" style=width:80%><h2 id=10与机密管理集成>10.与机密管理集成<a class=anchorjs-link href=#10%e4%b8%8e%e6%9c%ba%e5%af%86%e7%ae%a1%e7%90%86%e9%9b%86%e6%88%90></a></h2><p>对于管理密码、安全令牌和加密密钥等敏感凭证的 Kubernetes。您会惊奇地发现这些信息仍然被硬编码到应用程序中或以纯文本形式存储的频率。</p><img src="../imgs/13-must-have-features-to-adopting-a-zero-trust-model/62d7d1c08097ccdf88023209_Cloud Management 1.png" style=width:100%><h2 id=11多集群访问可观察性>11.多集群访问可观察性<a class=anchorjs-link href=#11%e5%a4%9a%e9%9b%86%e7%be%a4%e8%ae%bf%e9%97%ae%e5%8f%af%e8%a7%82%e5%af%9f%e6%80%a7></a></h2><p>提供整个系统所有活动的完整日志聚合和可审计性。这对于事件发生后的实时监控和取证都非常有用。对于分布式应用程序，有必要获得一个整体视图。许多人使用 Prometheus 和 Grafana 等开源工具来实现可观察性。
+<img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/RHACM-ObservabilityArch.png style=width:80%></p><h2 id=12漏洞扫描和发布>12.漏洞扫描和发布<a class=anchorjs-link href=#12%e6%bc%8f%e6%b4%9e%e6%89%ab%e6%8f%8f%e5%92%8c%e5%8f%91%e5%b8%83></a></h2><p>查找、解决和警告系统中的任何弱点。安全性取决于其最薄弱的环节，因此检查您的防御措施是否存在漏洞非常重要。
+<img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/Vulnerability-assessment_02.png style=width:100%></p><h2 id=13集群中继的安全拉取模型>13.集群中继的安全拉取模型<a class=anchorjs-link href=#13%e9%9b%86%e7%be%a4%e4%b8%ad%e7%bb%a7%e7%9a%84%e5%ae%89%e5%85%a8%e6%8b%89%e5%8f%96%e6%a8%a1%e5%9e%8b></a></h2><p>在整个系统中安全地共享配置。这非常微妙，但您希望确保任何配置更改都在请求时分发到边缘，并且仅在请求时分发。</p><img src=../imgs/13-must-have-features-to-adopting-a-zero-trust-model/external-configuration-store-overview.png style=width:90%><h2 id=附录>附录<a class=anchorjs-link href=#%e9%99%84%e5%bd%95></a></h2><ol><li><a href=https://www.f5.com/labs/learning-center/what-is-mtls target=_blank>What is mtls</a></li><li><a href=https://cybersecurity.att.com/blogs/security-essentials/the-zero-trust-authorization-core target=_blank>The zero trust authorization core</a></li><li><a href=https://www.keyfactor.com/resources/what-is-certificate-management/ target=_blank>What is Certificate Management</a></li><li><a href=https://www.dnsstuff.com/rbac-vs-abac-access-control target=_blank>RBAC vs. ABAC: What’s the Difference</a></li><li><a href=https://samilamppu.com/2014/09/15/creating-federation-trust-between-organizations/ target=_blank>Creating Federation Trust between organizations</a></li><li><a href=https://en.wikipedia.org/wiki/FIPS_140-2 target=_blank>FIPS 140-2</a></li><li><a href=https://coraza.io/ target=_blank>OWASP Coraza WAF</a></li><li><a href=https://www.techtarget.com/searchsecurity/definition/Web-application-firewall-WAF target=_blank>Web application firewall (WAF)</a></li><li><a href=https://hideez.com/blogs/news/data-loss-prevention-for-enterprises target=_blank>What is DLP</a></li></ol><hr style=visibility:hidden><ul class=pager><li class=previous><a href=/icorer_blog/posts/web3/verifiable-random-number-drand-program-experiment/ data-toggle=tooltip data-placement=top title=Drand去中心化可验证随机数>Previous<br><span>Drand去中心化可验证随机数</span></a></li><li class=next><a href=/icorer_blog/posts/web3/what-is-self-sovereign-identity/ data-toggle=tooltip data-placement=top title="Self-Sovereign Identity：什么是自我主权身份？">Next<br><span>Self-Sovereign Identity：什么是自我主权身份？</span></a></li></ul><hr style=visibility:hidden></div><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+sidebar-container"><section><hr class="hidden-sm hidden-xs"><h5>FEATURED TAGS</h5><div class=tags><a href=/icorer_blog/tags/blockchain/>blockchain</a>
+<a href=/icorer_blog/tags/clang/>CLang</a>
+<a href=/icorer_blog/tags/cloudnative/>cloudnative</a>
+<a href=/icorer_blog/tags/cmake/>Cmake</a>
+<a href=/icorer_blog/tags/cometbft/>CometBFT</a>
+<a href=/icorer_blog/tags/cosmos/>cosmos</a>
+<a href=/icorer_blog/tags/dcdn/>DCDN</a>
+<a href=/icorer_blog/tags/deca/>DeCA</a>
+<a href=/icorer_blog/tags/depin/>DePIN</a>
+<a href=/icorer_blog/tags/dpki/>DPKI</a>
+<a href=/icorer_blog/tags/drand/>drand</a>
+<a href=/icorer_blog/tags/eip/>EIP</a>
+<a href=/icorer_blog/tags/epoll/>epoll</a>
+<a href=/icorer_blog/tags/ethereum/>Ethereum</a>
+<a href=/icorer_blog/tags/fpga/>FPGA</a>
+<a href=/icorer_blog/tags/gc/>GC</a>
+<a href=/icorer_blog/tags/golang/>GoLang</a>
+<a href=/icorer_blog/tags/hackathon/>Hackathon</a>
+<a href=/icorer_blog/tags/http2/>HTTP2</a>
+<a href=/icorer_blog/tags/http3/>HTTP3</a>
+<a href=/icorer_blog/tags/icefiredb/>IceFireDB</a>
+<a href=/icorer_blog/tags/k8s/>k8s</a>
+<a href=/icorer_blog/tags/kafka/>kafka</a>
+<a href=/icorer_blog/tags/layer2/>Layer2</a>
+<a href=/icorer_blog/tags/linux/>linux</a>
+<a href=/icorer_blog/tags/nginx/>Nginx</a>
+<a href=/icorer_blog/tags/nosql/>NoSQL</a>
+<a href=/icorer_blog/tags/php/>PHP</a>
+<a href=/icorer_blog/tags/php-kernel/>php kernel</a>
+<a href=/icorer_blog/tags/php%E5%86%85%E6%A0%B8/>PHP内核</a>
+<a href=/icorer_blog/tags/pki/>PKI</a>
+<a href=/icorer_blog/tags/quic/>QUIC</a>
+<a href=/icorer_blog/tags/redis/>redis</a>
+<a href=/icorer_blog/tags/sbt/>SBT</a>
+<a href=/icorer_blog/tags/serverless/>serverless</a>
+<a href=/icorer_blog/tags/ssi/>SSI</a>
+<a href=/icorer_blog/tags/tendermint/>Tendermint</a>
+<a href=/icorer_blog/tags/unikernel/>unikernel</a>
+<a href=/icorer_blog/tags/wanxiang/>Wanxiang</a>
+<a href=/icorer_blog/tags/web3/>web3</a>
+<a href=/icorer_blog/tags/zerotrust/>ZeroTrust</a>
+<a href=/icorer_blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/>中间件</a>
+<a href=/icorer_blog/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/>云原生</a>
+<a href=/icorer_blog/tags/%E4%BB%A5%E5%A4%AA%E5%9D%8A/>以太坊</a>
+<a href=/icorer_blog/tags/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/>信息安全</a>
+<a href=/icorer_blog/tags/%E5%86%85%E5%AD%98%E6%95%B0%E6%8D%AE%E5%BA%93/>内存数据库</a>
+<a href=/icorer_blog/tags/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/>内存泄漏</a>
+<a href=/icorer_blog/tags/%E5%86%85%E6%A0%B8%E6%BA%90%E7%A0%81/>内核源码</a>
+<a href=/icorer_blog/tags/%E5%86%85%E6%A0%B8%E7%A0%94%E7%A9%B6/>内核研究</a>
+<a href=/icorer_blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/>分布式</a>
+<a href=/icorer_blog/tags/%E5%8C%BA%E5%9D%97%E9%93%BE/>区块链</a>
+<a href=/icorer_blog/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/>垃圾回收</a>
+<a href=/icorer_blog/tags/%E5%AD%98%E5%82%A8/>存储</a>
+<a href=/icorer_blog/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E5%BC%80%E5%8F%91/>底层开发</a>
+<a href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/>底层研究</a>
+<a href=/icorer_blog/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/>开源项目</a>
+<a href=/icorer_blog/tags/%E5%BC%82%E6%9E%84%E8%AE%A1%E7%AE%97/>异构计算</a>
+<a href=/icorer_blog/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/>微服务</a>
+<a href=/icorer_blog/tags/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/>性能测试</a>
+<a href=/icorer_blog/tags/%E6%8A%80%E6%9C%AF%E7%A7%91%E6%99%AE/>技术科普</a>
+<a href=/icorer_blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/>数据库</a>
+<a href=/icorer_blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8A%80%E6%9C%AF/>数据库技术</a>
+<a href=/icorer_blog/tags/%E6%96%87%E7%AB%A0%E7%BF%BB%E8%AF%91/>文章翻译</a>
+<a href=/icorer_blog/tags/%E6%96%B0%E6%9E%B6%E6%9E%84/>新架构</a>
+<a href=/icorer_blog/tags/%E6%97%B6%E5%BA%8F%E6%95%B0%E6%8D%AE%E5%BA%93/>时序数据库</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/>服务治理</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC/>服务网格</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E9%81%A5%E6%B5%8B/>服务遥测</a>
+<a href=/icorer_blog/tags/%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A/>测试报告</a>
+<a href=/icorer_blog/tags/%E7%A0%94%E7%A9%B6%E6%8A%A5%E5%91%8A/>研究报告</a>
+<a href=/icorer_blog/tags/%E7%BC%93%E5%AD%98%E6%8A%80%E6%9C%AF/>缓存技术</a>
+<a href=/icorer_blog/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/>网络安全</a>
+<a href=/icorer_blog/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/>虚拟机</a>
+<a href=/icorer_blog/tags/%E8%A1%8C%E4%B8%9A%E6%8A%A5%E5%91%8A/>行业报告</a>
+<a href=/icorer_blog/tags/%E8%AE%BA%E6%96%87/>论文</a>
+<a href=/icorer_blog/tags/%E8%B7%A8%E9%93%BE/>跨链</a>
+<a href=/icorer_blog/tags/%E9%9B%B6%E4%BF%A1%E4%BB%BB/>零信任</a>
+<a href=/icorer_blog/tags/%E9%AB%98%E6%80%A7%E8%83%BD/>高性能</a></div></section></div></div></div></article><footer><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><ul class="list-inline text-center"><li><a href=/icorer_blog/index.xml><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-rss fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://twitter.com/lb_icefirelabs><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-twitter fa-stack-1x fa-inverse"></i></span></a></li><li><a target=_blank href=https://github.com/gitsrc><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-github fa-stack-1x fa-inverse"></i></span></a></li></ul><p class="copyright text-muted">Copyright &copy; 笔迹-工匠之芯 2023</p></div></div></div></footer><script src=/icorer_blog/js/jquery.min.js></script><script src=/icorer_blog/js/bootstrap.min.js crossorigin=anonymous></script><script src=/icorer_blog/js/hux-blog.min.c4ea77041cd3edbfc8b2622cd887a9a5d8760a4162d14489e36d2a3fa4c90172.js></script><script src=/icorer_blog/js/simple-jekyll-search.min.js></script><script src=/icorer_blog/js/search.min.7d1445cf07369bca2715d9f63738c16c73a7a2273a95d6729bee561f7e84c6c8.js></script><script src=/icorer_blog/zoomjs/zoom.min.js></script><script async src="https://www.googletagmanager.com/gtag/js?id=G-VB37D8LWFT"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-VB37D8LWFT")</script></body></html>
