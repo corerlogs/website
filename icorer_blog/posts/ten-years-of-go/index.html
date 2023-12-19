@@ -1,0 +1,144 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel=icon type=image/ico sizes=16x16 href=/icorer_blog/img/favicon.ico><meta property="og:image" content="https://icorer.com/img/34047788_pepere.jpg"><title>Go 十年 | 笔迹-工匠之芯</title>
+<meta name=author content="LB"><meta name=description content="Russ Cox，代表Go团队
+2019年11月8日
+Happy birthday, Go!
+这个周末，我们庆祝Go发布10周年，庆祝Go作为一种开源编程语言和构建现代网络软件的生态系统的10周年。
+为了纪念这一时刻，Go gopher的创始人蕾妮·弗兰奇描绘了这一令人愉快的场景:
+庆祝Go十周年让我回想起2009年11月上旬，那时我们正准备与世界分享Go。 我们不知道会有什么样的反应，也不知道是否有人会关心这种小小的语言。我希望，即使没有人最终使用Go，我们至少也会注意到一些好的想法，特别是Go的并发性和接口方法，它们可能会影响后续语言。
+当人们对Go感到兴奋的时候，我研究了流行语言的历史，比如C、C++、Perl、Python和Ruby，考察了它们被广泛采用所花的时间。例如，在我看来，Perl似乎在上世纪90年代中后期就已经完全成形了，有了CGI脚本和web，但它是在1987年首次发布的。这一模式几乎适用于我所研究的每一种语言:一种新的语言要真正起飞，似乎需要大约十年的安静、稳定的改进和传播。
+我在想:十年后会是什么样子?
+今天，我们可以回答这个问题:Go无处不在，全世界至少有一百万开发者在使用它。
+Go最初的目标是网络系统基础设施，也就是我们现在所说的云软件。如今，每个主要的云提供商都使用用Go编写的核心云基础设施，如Docker、Etcd、Istio、Kubernetes、Prometheus和Terraform;云计算基金会的大多数项目都是用Go编写的。无数的公司也在使用Go将他们自己的工作转移到云上，从从无到有的创业公司到现代化软件栈的企业。Go的应用范围也远远超出了它最初的云目标，从使用GoBot和TinyGo来控制微型嵌入式系统，到使用GRAIL进行大规模的大数据分析和机器学习来检测癌症，以及两者之间的一切。
+所有这一切都说明，Go的成功超乎我们的想象。Go的成功不仅仅在于语言。它是关于语言，生态系统，特别是社区的合作。
+在2009年，该语言是一个不错的主意，并带有一个实现的工作草图。 go命令不存在：我们运行了诸如6g的命令进行编译，并运行了6l的命令来链接二进制文件，这些命令使用makefiles自动执行。 我们在语句末尾键入分号。 整个程序在垃圾回收期间停止，然后努力利用两个内核。 Go只能在Linux和Mac，32位和64位x86和32位ARM上运行。
+在过去的十年里，在全球Go开发人员的帮助下，我们已经将这个想法和草图发展成为一种富有成效的语言，它具有出色的工具、高质量的产品实现、最先进的垃圾收集器以及12个操作系统和10个体系结构支持。
+任何编程语言都需要蓬勃发展的生态系统的支持。 开源版本是该生态系统的种子，但是从那时起，许多人贡献了自己的时间和才干，用出色的教程，书籍，课程，博客文章，播客，工具，集成以及可重复使用的Go来填充Go生态系统。 可通过go get导入的软件包。 没有这个生态系统的支持，Go永远不可能成功。
+当然，生态系统需要蓬勃发展的社区的支持。 在2019年，全球有数十个Go会议，以及超过90个成员超过150个Go会议团体。GoBridge和Going Who Go通过指导，培训和会议奖学金帮助将新的声音带入Go社区。仅今年一年，他们就在社区成员教授和指导新加入者的研讨会上，教育了数百名来自传统代表性不足群体的人。
+全球有超过一百万的Go开发人员，全球各地的公司都在寻求雇用更多的人。 实际上，人们经常告诉我们，学习Go帮助他们获得了技术行业的第一份工作。 最后，我们为Go感到最自豪的不是设计完善的功能或巧妙的代码，而是Go在这么多人的生活中产生的积极影响。我们的目标是创造一种语言，帮助我们成为更好的开发人员，我们很高兴Go帮助了这么多人。
+作为＃GoTurns10，我希望每个人都花一点时间来庆祝Go社区以及我们所取得的一切。 代表Google的整个Go团队，感谢过去十年来加入我们的每个人。 让下一个更不可思议！
+Original URL : https://blog.golang.org/10years"><meta name=keywords content="blog,博客,工匠之芯,笔迹-工匠之芯"><meta name=twitter:card content="summary"><meta name=twitter:title content="Go 十年"><meta name=twitter:description content="Russ Cox，代表Go团队
+2019年11月8日
+Happy birthday, Go!
+这个周末，我们庆祝Go发布10周年，庆祝Go作为一种开源编程语言和构建现代网络软件的生态系统的10周年。
+为了纪念这一时刻，Go gopher的创始人蕾妮·弗兰奇描绘了这一令人愉快的场景:
+庆祝Go十周年让我回想起2009年11月上旬，那时我们正准备与世界分享Go。 我们不知道会有什么样的反应，也不知道是否有人会关心这种小小的语言。我希望，即使没有人最终使用Go，我们至少也会注意到一些好的想法，特别是Go的并发性和接口方法，它们可能会影响后续语言。
+当人们对Go感到兴奋的时候，我研究了流行语言的历史，比如C、C++、Perl、Python和Ruby，考察了它们被广泛采用所花的时间。例如，在我看来，Perl似乎在上世纪90年代中后期就已经完全成形了，有了CGI脚本和web，但它是在1987年首次发布的。这一模式几乎适用于我所研究的每一种语言:一种新的语言要真正起飞，似乎需要大约十年的安静、稳定的改进和传播。
+我在想:十年后会是什么样子?
+今天，我们可以回答这个问题:Go无处不在，全世界至少有一百万开发者在使用它。
+Go最初的目标是网络系统基础设施，也就是我们现在所说的云软件。如今，每个主要的云提供商都使用用Go编写的核心云基础设施，如Docker、Etcd、Istio、Kubernetes、Prometheus和Terraform;云计算基金会的大多数项目都是用Go编写的。无数的公司也在使用Go将他们自己的工作转移到云上，从从无到有的创业公司到现代化软件栈的企业。Go的应用范围也远远超出了它最初的云目标，从使用GoBot和TinyGo来控制微型嵌入式系统，到使用GRAIL进行大规模的大数据分析和机器学习来检测癌症，以及两者之间的一切。
+所有这一切都说明，Go的成功超乎我们的想象。Go的成功不仅仅在于语言。它是关于语言，生态系统，特别是社区的合作。
+在2009年，该语言是一个不错的主意，并带有一个实现的工作草图。 go命令不存在：我们运行了诸如6g的命令进行编译，并运行了6l的命令来链接二进制文件，这些命令使用makefiles自动执行。 我们在语句末尾键入分号。 整个程序在垃圾回收期间停止，然后努力利用两个内核。 Go只能在Linux和Mac，32位和64位x86和32位ARM上运行。
+在过去的十年里，在全球Go开发人员的帮助下，我们已经将这个想法和草图发展成为一种富有成效的语言，它具有出色的工具、高质量的产品实现、最先进的垃圾收集器以及12个操作系统和10个体系结构支持。
+任何编程语言都需要蓬勃发展的生态系统的支持。 开源版本是该生态系统的种子，但是从那时起，许多人贡献了自己的时间和才干，用出色的教程，书籍，课程，博客文章，播客，工具，集成以及可重复使用的Go来填充Go生态系统。 可通过go get导入的软件包。 没有这个生态系统的支持，Go永远不可能成功。
+当然，生态系统需要蓬勃发展的社区的支持。 在2019年，全球有数十个Go会议，以及超过90个成员超过150个Go会议团体。GoBridge和Going Who Go通过指导，培训和会议奖学金帮助将新的声音带入Go社区。仅今年一年，他们就在社区成员教授和指导新加入者的研讨会上，教育了数百名来自传统代表性不足群体的人。
+全球有超过一百万的Go开发人员，全球各地的公司都在寻求雇用更多的人。 实际上，人们经常告诉我们，学习Go帮助他们获得了技术行业的第一份工作。 最后，我们为Go感到最自豪的不是设计完善的功能或巧妙的代码，而是Go在这么多人的生活中产生的积极影响。我们的目标是创造一种语言，帮助我们成为更好的开发人员，我们很高兴Go帮助了这么多人。
+作为＃GoTurns10，我希望每个人都花一点时间来庆祝Go社区以及我们所取得的一切。 代表Google的整个Go团队，感谢过去十年来加入我们的每个人。 让下一个更不可思议！
+Original URL : https://blog.golang.org/10years"><meta name=twitter:site content="@lb_icefirelabs"><meta property="og:title" content="Go 十年"><meta property="og:description" content="Russ Cox，代表Go团队
+2019年11月8日
+Happy birthday, Go!
+这个周末，我们庆祝Go发布10周年，庆祝Go作为一种开源编程语言和构建现代网络软件的生态系统的10周年。
+为了纪念这一时刻，Go gopher的创始人蕾妮·弗兰奇描绘了这一令人愉快的场景:
+庆祝Go十周年让我回想起2009年11月上旬，那时我们正准备与世界分享Go。 我们不知道会有什么样的反应，也不知道是否有人会关心这种小小的语言。我希望，即使没有人最终使用Go，我们至少也会注意到一些好的想法，特别是Go的并发性和接口方法，它们可能会影响后续语言。
+当人们对Go感到兴奋的时候，我研究了流行语言的历史，比如C、C++、Perl、Python和Ruby，考察了它们被广泛采用所花的时间。例如，在我看来，Perl似乎在上世纪90年代中后期就已经完全成形了，有了CGI脚本和web，但它是在1987年首次发布的。这一模式几乎适用于我所研究的每一种语言:一种新的语言要真正起飞，似乎需要大约十年的安静、稳定的改进和传播。
+我在想:十年后会是什么样子?
+今天，我们可以回答这个问题:Go无处不在，全世界至少有一百万开发者在使用它。
+Go最初的目标是网络系统基础设施，也就是我们现在所说的云软件。如今，每个主要的云提供商都使用用Go编写的核心云基础设施，如Docker、Etcd、Istio、Kubernetes、Prometheus和Terraform;云计算基金会的大多数项目都是用Go编写的。无数的公司也在使用Go将他们自己的工作转移到云上，从从无到有的创业公司到现代化软件栈的企业。Go的应用范围也远远超出了它最初的云目标，从使用GoBot和TinyGo来控制微型嵌入式系统，到使用GRAIL进行大规模的大数据分析和机器学习来检测癌症，以及两者之间的一切。
+所有这一切都说明，Go的成功超乎我们的想象。Go的成功不仅仅在于语言。它是关于语言，生态系统，特别是社区的合作。
+在2009年，该语言是一个不错的主意，并带有一个实现的工作草图。 go命令不存在：我们运行了诸如6g的命令进行编译，并运行了6l的命令来链接二进制文件，这些命令使用makefiles自动执行。 我们在语句末尾键入分号。 整个程序在垃圾回收期间停止，然后努力利用两个内核。 Go只能在Linux和Mac，32位和64位x86和32位ARM上运行。
+在过去的十年里，在全球Go开发人员的帮助下，我们已经将这个想法和草图发展成为一种富有成效的语言，它具有出色的工具、高质量的产品实现、最先进的垃圾收集器以及12个操作系统和10个体系结构支持。
+任何编程语言都需要蓬勃发展的生态系统的支持。 开源版本是该生态系统的种子，但是从那时起，许多人贡献了自己的时间和才干，用出色的教程，书籍，课程，博客文章，播客，工具，集成以及可重复使用的Go来填充Go生态系统。 可通过go get导入的软件包。 没有这个生态系统的支持，Go永远不可能成功。
+当然，生态系统需要蓬勃发展的社区的支持。 在2019年，全球有数十个Go会议，以及超过90个成员超过150个Go会议团体。GoBridge和Going Who Go通过指导，培训和会议奖学金帮助将新的声音带入Go社区。仅今年一年，他们就在社区成员教授和指导新加入者的研讨会上，教育了数百名来自传统代表性不足群体的人。
+全球有超过一百万的Go开发人员，全球各地的公司都在寻求雇用更多的人。 实际上，人们经常告诉我们，学习Go帮助他们获得了技术行业的第一份工作。 最后，我们为Go感到最自豪的不是设计完善的功能或巧妙的代码，而是Go在这么多人的生活中产生的积极影响。我们的目标是创造一种语言，帮助我们成为更好的开发人员，我们很高兴Go帮助了这么多人。
+作为＃GoTurns10，我希望每个人都花一点时间来庆祝Go社区以及我们所取得的一切。 代表Google的整个Go团队，感谢过去十年来加入我们的每个人。 让下一个更不可思议！
+Original URL : https://blog.golang.org/10years"><meta property="og:type" content="article"><meta property="og:url" content="https://icorer.com/icorer_blog/posts/ten-years-of-go/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2019-12-24T13:18:18+08:00"><meta property="article:modified_time" content="2019-12-24T13:18:18+08:00"><link rel=stylesheet href=/icorer_blog/css/bootstrap.min.css crossorigin=anonymous><link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css rel=stylesheet type=text/css><link rel=stylesheet href=/icorer_blog/sass/main.css><link rel=stylesheet href=/icorer_blog/zoomjs/zoom.min.css><script src=/icorer_blog/js/lazysizes.min.js></script><link rel=apple-touch-icon sizes=180x180 href=/icorer_blog/apple-touch-icon.png><link rel=manifest href=/icorer_blog/site.webmanifest></head><body><nav class="navbar navbar-default navbar-custom navbar-fixed-top invert"><div class=container-fluid><div class="navbar-header page-scroll"><button type=button class=navbar-toggle>
+<span class=sr-only>Toggle navigation</span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+</button>
+<a class=navbar-brand href=https://icorer.com/icorer_blog/>笔迹-工匠之芯</a></div><div id=huxblog_navbar><div class=navbar-collapse><ul class="nav navbar-nav navbar-right"><li><a href=https://icorer.com title=工匠之芯>工匠之芯</a></li><li><a href=https://icorer.com/icorer_about title=关于我>关于我</a></li><li><a href=https://github.com/gitsrc title=开源仓库>开源仓库</a></li><li class=search-icon><a href=javascript:void(0)><i class="fa fa-search"></i></a></li></ul></div></div></div></nav><script>var $body=document.body,$toggle=document.querySelector(".navbar-toggle"),$navbar=document.querySelector("#huxblog_navbar"),$collapse=document.querySelector(".navbar-collapse"),__HuxNav__={close:function(){$navbar.className=" ",setTimeout(function(){$navbar.className.indexOf("in")<0&&($collapse.style.height="0px")},400)},open:function(){$collapse.style.height="auto",$navbar.className+=" in"}};$toggle.addEventListener("click",function(){$navbar.className.indexOf("in")>0?__HuxNav__.close():__HuxNav__.open()}),document.addEventListener("click",function(e){if(e.target==$toggle)return;if(e.target.className=="icon-bar")return;__HuxNav__.close()})</script><div class=search-page><div class=search-icon-close-container><span class=search-icon-close><i class="fa fa-chevron-down"></i></span></div><div class="search-main container"><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><form></form><input type=text id=search-input placeholder=内容搜索...></form><div id=search-results class=mini-post-list></div></div></div></div></div><style type=text/css>header.intro-header{position:relative;background-image:url('')}</style><header class="intro-header style-text"><div class=header-mask></div><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><div class=post-heading><div class=tags><a class=tag href=/icorer_blog/tags/golang/ title=GoLang>GoLang</a>
+<a class=tag href=/icorer_blog/tags/%E6%96%87%E7%AB%A0%E7%BF%BB%E8%AF%91/ title=文章翻译>文章翻译</a></div><h1>Go 十年</h1><h2 class=subheading></h2><span class=meta>Posted by LB
+on Tue, Dec 24, 2019</span></div></div></div></div></header><article><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+post-container"><p>Russ Cox，代表Go团队</p><p>2019年11月8日</p><p>Happy birthday, Go!</p><p>这个周末，我们庆祝Go发布10周年，庆祝Go作为一种开源编程语言和构建现代网络软件的生态系统的10周年。</p><p>为了纪念这一时刻，Go gopher的创始人蕾妮·弗兰奇描绘了这一令人愉快的场景:</p><p><figure><a class=paragraph-image><img data-src=https://res.cloudinary.com/malloc/image/upload/v1577163713/malloc.world/go_ten_years/gopher10th-small_lcsbm9.jpg data-action=zoom alt class=lazyload></a></figure></p><p>庆祝Go十周年让我回想起2009年11月上旬，那时我们正准备与世界分享Go。 我们不知道会有什么样的反应，也不知道是否有人会关心这种小小的语言。我希望，即使没有人最终使用Go，我们至少也会注意到一些好的想法，特别是Go的并发性和接口方法，它们可能会影响后续语言。</p><p>当人们对Go感到兴奋的时候，我研究了流行语言的历史，比如C、C++、Perl、Python和Ruby，考察了它们被广泛采用所花的时间。例如，在我看来，Perl似乎在上世纪90年代中后期就已经完全成形了，有了CGI脚本和web，但它是在1987年首次发布的。这一模式几乎适用于我所研究的每一种语言:一种新的语言要真正起飞，似乎需要大约十年的安静、稳定的改进和传播。</p><p>我在想:十年后会是什么样子?</p><p>今天，我们可以回答这个问题:Go无处不在，全世界至少有一百万开发者在使用它。</p><p>Go最初的目标是网络系统基础设施，也就是我们现在所说的云软件。如今，每个主要的云提供商都使用用Go编写的核心云基础设施，如Docker、Etcd、Istio、Kubernetes、Prometheus和Terraform;云计算基金会的大多数项目都是用Go编写的。无数的公司也在使用Go将他们自己的工作转移到云上，从从无到有的创业公司到现代化软件栈的企业。Go的应用范围也远远超出了它最初的云目标，从使用GoBot和TinyGo来控制微型嵌入式系统，到使用GRAIL进行大规模的大数据分析和机器学习来检测癌症，以及两者之间的一切。</p><p>所有这一切都说明，Go的成功超乎我们的想象。Go的成功不仅仅在于语言。它是关于语言，生态系统，特别是社区的合作。</p><p>在2009年，该语言是一个不错的主意，并带有一个实现的工作草图。 go命令不存在：我们运行了诸如6g的命令进行编译，并运行了6l的命令来链接二进制文件，这些命令使用makefiles自动执行。 我们在语句末尾键入分号。 整个程序在垃圾回收期间停止，然后努力利用两个内核。 Go只能在Linux和Mac，32位和64位x86和32位ARM上运行。</p><p>在过去的十年里，在全球Go开发人员的帮助下，我们已经将这个想法和草图发展成为一种富有成效的语言，它具有出色的工具、高质量的产品实现、最先进的垃圾收集器以及12个操作系统和10个体系结构支持。</p><p>任何编程语言都需要蓬勃发展的生态系统的支持。 开源版本是该生态系统的种子，但是从那时起，许多人贡献了自己的时间和才干，用出色的教程，书籍，课程，博客文章，播客，工具，集成以及可重复使用的Go来填充Go生态系统。 可通过go get导入的软件包。 没有这个生态系统的支持，Go永远不可能成功。</p><p>当然，生态系统需要蓬勃发展的社区的支持。 在2019年，全球有数十个Go会议，以及超过90个成员超过150个Go会议团体。GoBridge和Going Who Go通过指导，培训和会议奖学金帮助将新的声音带入Go社区。仅今年一年，他们就在社区成员教授和指导新加入者的研讨会上，教育了数百名来自传统代表性不足群体的人。</p><p>全球有超过一百万的Go开发人员，全球各地的公司都在寻求雇用更多的人。 实际上，人们经常告诉我们，学习Go帮助他们获得了技术行业的第一份工作。 最后，我们为Go感到最自豪的不是设计完善的功能或巧妙的代码，而是Go在这么多人的生活中产生的积极影响。我们的目标是创造一种语言，帮助我们成为更好的开发人员，我们很高兴Go帮助了这么多人。</p><p>作为＃GoTurns10，我希望每个人都花一点时间来庆祝Go社区以及我们所取得的一切。 代表Google的整个Go团队，感谢过去十年来加入我们的每个人。 让下一个更不可思议！</p><p>Original URL : <a href=https://blog.golang.org/10years target=_blank>https://blog.golang.org/10years</a></p><hr style=visibility:hidden><ul class=pager><li class=previous><a href=/icorer_blog/posts/curl-vs-guzzle-performance-test/ data-toggle=tooltip data-placement=top title="Curl-VS-Guzzle 性能测试">Previous<br><span>Curl-VS-Guzzle 性能测试</span></a></li><li class=next><a href=/icorer_blog/posts/libcurl-dns-timeout-parameter-analysis/ data-toggle=tooltip data-placement=top title=LibCurl-DNS超时参数解析>Next<br><span>LibCurl-DNS超时参数解析</span></a></li></ul><hr style=visibility:hidden></div><div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+sidebar-container"><section><hr class="hidden-sm hidden-xs"><h5>FEATURED TAGS</h5><div class=tags><a href=/icorer_blog/tags/blockchain/>blockchain</a>
+<a href=/icorer_blog/tags/clang/>CLang</a>
+<a href=/icorer_blog/tags/cloudnative/>cloudnative</a>
+<a href=/icorer_blog/tags/cmake/>Cmake</a>
+<a href=/icorer_blog/tags/cometbft/>CometBFT</a>
+<a href=/icorer_blog/tags/cosmos/>cosmos</a>
+<a href=/icorer_blog/tags/dcdn/>DCDN</a>
+<a href=/icorer_blog/tags/deca/>DeCA</a>
+<a href=/icorer_blog/tags/depin/>DePIN</a>
+<a href=/icorer_blog/tags/dpki/>DPKI</a>
+<a href=/icorer_blog/tags/drand/>drand</a>
+<a href=/icorer_blog/tags/eip/>EIP</a>
+<a href=/icorer_blog/tags/epoll/>epoll</a>
+<a href=/icorer_blog/tags/ethereum/>Ethereum</a>
+<a href=/icorer_blog/tags/fpga/>FPGA</a>
+<a href=/icorer_blog/tags/gc/>GC</a>
+<a href=/icorer_blog/tags/golang/>GoLang</a>
+<a href=/icorer_blog/tags/hackathon/>Hackathon</a>
+<a href=/icorer_blog/tags/http2/>HTTP2</a>
+<a href=/icorer_blog/tags/http3/>HTTP3</a>
+<a href=/icorer_blog/tags/icefiredb/>IceFireDB</a>
+<a href=/icorer_blog/tags/k8s/>k8s</a>
+<a href=/icorer_blog/tags/kafka/>kafka</a>
+<a href=/icorer_blog/tags/layer2/>Layer2</a>
+<a href=/icorer_blog/tags/linux/>linux</a>
+<a href=/icorer_blog/tags/nginx/>Nginx</a>
+<a href=/icorer_blog/tags/nosql/>NoSQL</a>
+<a href=/icorer_blog/tags/php/>PHP</a>
+<a href=/icorer_blog/tags/php-kernel/>php kernel</a>
+<a href=/icorer_blog/tags/php%E5%86%85%E6%A0%B8/>PHP内核</a>
+<a href=/icorer_blog/tags/quic/>QUIC</a>
+<a href=/icorer_blog/tags/redis/>redis</a>
+<a href=/icorer_blog/tags/sbt/>SBT</a>
+<a href=/icorer_blog/tags/serverless/>serverless</a>
+<a href=/icorer_blog/tags/ssi/>SSI</a>
+<a href=/icorer_blog/tags/tendermint/>Tendermint</a>
+<a href=/icorer_blog/tags/unikernel/>unikernel</a>
+<a href=/icorer_blog/tags/wanxiang/>Wanxiang</a>
+<a href=/icorer_blog/tags/web3/>web3</a>
+<a href=/icorer_blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/>中间件</a>
+<a href=/icorer_blog/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/>云原生</a>
+<a href=/icorer_blog/tags/%E4%BB%A5%E5%A4%AA%E5%9D%8A/>以太坊</a>
+<a href=/icorer_blog/tags/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/>信息安全</a>
+<a href=/icorer_blog/tags/%E5%86%85%E5%AD%98%E6%95%B0%E6%8D%AE%E5%BA%93/>内存数据库</a>
+<a href=/icorer_blog/tags/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/>内存泄漏</a>
+<a href=/icorer_blog/tags/%E5%86%85%E6%A0%B8%E6%BA%90%E7%A0%81/>内核源码</a>
+<a href=/icorer_blog/tags/%E5%86%85%E6%A0%B8%E7%A0%94%E7%A9%B6/>内核研究</a>
+<a href=/icorer_blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/>分布式</a>
+<a href=/icorer_blog/tags/%E5%8C%BA%E5%9D%97%E9%93%BE/>区块链</a>
+<a href=/icorer_blog/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/>垃圾回收</a>
+<a href=/icorer_blog/tags/%E5%AD%98%E5%82%A8/>存储</a>
+<a href=/icorer_blog/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E5%BC%80%E5%8F%91/>底层开发</a>
+<a href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/>底层研究</a>
+<a href=/icorer_blog/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/>开源项目</a>
+<a href=/icorer_blog/tags/%E5%BC%82%E6%9E%84%E8%AE%A1%E7%AE%97/>异构计算</a>
+<a href=/icorer_blog/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/>微服务</a>
+<a href=/icorer_blog/tags/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/>性能测试</a>
+<a href=/icorer_blog/tags/%E6%8A%80%E6%9C%AF%E7%A7%91%E6%99%AE/>技术科普</a>
+<a href=/icorer_blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/>数据库</a>
+<a href=/icorer_blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8A%80%E6%9C%AF/>数据库技术</a>
+<a href=/icorer_blog/tags/%E6%96%87%E7%AB%A0%E7%BF%BB%E8%AF%91/>文章翻译</a>
+<a href=/icorer_blog/tags/%E6%96%B0%E6%9E%B6%E6%9E%84/>新架构</a>
+<a href=/icorer_blog/tags/%E6%97%B6%E5%BA%8F%E6%95%B0%E6%8D%AE%E5%BA%93/>时序数据库</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/>服务治理</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC/>服务网格</a>
+<a href=/icorer_blog/tags/%E6%9C%8D%E5%8A%A1%E9%81%A5%E6%B5%8B/>服务遥测</a>
+<a href=/icorer_blog/tags/%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A/>测试报告</a>
+<a href=/icorer_blog/tags/%E7%A0%94%E7%A9%B6%E6%8A%A5%E5%91%8A/>研究报告</a>
+<a href=/icorer_blog/tags/%E7%BC%93%E5%AD%98%E6%8A%80%E6%9C%AF/>缓存技术</a>
+<a href=/icorer_blog/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/>网络安全</a>
+<a href=/icorer_blog/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/>虚拟机</a>
+<a href=/icorer_blog/tags/%E8%A1%8C%E4%B8%9A%E6%8A%A5%E5%91%8A/>行业报告</a>
+<a href=/icorer_blog/tags/%E8%AE%BA%E6%96%87/>论文</a>
+<a href=/icorer_blog/tags/%E8%B7%A8%E9%93%BE/>跨链</a>
+<a href=/icorer_blog/tags/%E9%9B%B6%E4%BF%A1%E4%BB%BB/>零信任</a>
+<a href=/icorer_blog/tags/%E9%AB%98%E6%80%A7%E8%83%BD/>高性能</a></div></section></div></div></div></article><footer><div class=container><div class=row><div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"><ul class="list-inline text-center"><li><a href=/icorer_blog/index.xml><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-rss fa-stack-1x fa-inverse"></i></span></a></li><li><a href=https://twitter.com/lb_icefirelabs><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-twitter fa-stack-1x fa-inverse"></i></span></a></li><li><a target=_blank href=https://github.com/gitsrc><span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x"></i>
+<i class="fa fa-github fa-stack-1x fa-inverse"></i></span></a></li></ul><p class="copyright text-muted">Copyright &copy; 笔迹-工匠之芯 2023</p></div></div></div></footer><script src=/icorer_blog/js/jquery.min.js></script><script src=/icorer_blog/js/bootstrap.min.js crossorigin=anonymous></script><script src=/icorer_blog/js/hux-blog.min.c4ea77041cd3edbfc8b2622cd887a9a5d8760a4162d14489e36d2a3fa4c90172.js></script><script src=/icorer_blog/js/simple-jekyll-search.min.js></script><script src=/icorer_blog/js/search.min.7d1445cf07369bca2715d9f63738c16c73a7a2273a95d6729bee561f7e84c6c8.js></script><script src=/icorer_blog/zoomjs/zoom.min.js></script><script async src="https://www.googletagmanager.com/gtag/js?id=G-VB37D8LWFT"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-VB37D8LWFT")</script></body></html>
