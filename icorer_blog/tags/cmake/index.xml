@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cmake on 笔迹-工匠之芯</title><link>https://icorer.com/icorer_blog/tags/cmake/</link><description>Recent content in Cmake on 笔迹-工匠之芯</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Tue, 19 Feb 2019 14:32:18 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/cmake/index.xml" rel="self" type="application/rss+xml"/><item><title>基于CMake构建标准GoLang编译和打包框架</title><link>https://icorer.com/icorer_blog/posts/build-standard-go-compilation-and-packaging-framework-based-on-cmake/</link><pubDate>Tue, 19 Feb 2019 14:32:18 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/build-standard-go-compilation-and-packaging-framework-based-on-cmake/</guid><description>##一. 背景描述
+为了简化团队内部中间件的编译及打包和方便运维伙伴的线上环境部署过程 , 我们开始尝试使用标准的rpm安装包来进行线上的环境部署,虽然制作rpm安装包可以采用很多途径 , 但是我们选择采用CMake方式 , 采用这种方式的优点如下:
+利用CMake 可以构建出很强大的自动编译系统. CMake在编译周期结束后,支持rpm , zip等格式的自动打包. 下面的内容从两个方面来阐述: 利用CMake 构建Go语言的自动编译环境 , 利用CMake 进行rpm包制作
+二. 实现Go语言的通用CMake编译框架2.1 文件结构这里将构建一个具有通用性的Go语言工程编译环境,旨在为后续Go语言开发工程师,提供团队内部统一的构建基础环境, 首先我们来查看一下文件结构,文件结构的树形图如下:
+在这个文件结构中,我们先阐述一下相关文件的作用:
+CMakeLists.txt : 构建系统的总入口 cmake目录 : 这个目录存储构建系统的子功能模块 cmd : 这个目录是一个功能单元的样例环境, 这里的CMakeLists.txt 被根CMakeList 加载. 2.2 重要文件描述上面的工程结构,保障了CMake工程的结构化清晰,这里将对几个重要文件做详细阐述
+2.2.1 CMakeLists.txt这个文件是CMake工程的总入口 , 它负责的工作包括:
+加载cmake子目录下的子功能单元 定义Go工程的相关工程属性: 工程名, 工程版本号 加载go语言编译器 加载各个子编译体的源码目录 加载rpm , zip 等打包模块 2.2.2 CMakeDetermineGoCompiler.cmake这个文件Go语言编译器的总入口 , 它负责的工作包括:
+在操作系统环境中寻找Go语言编译器 加载Go编译器参数 拷贝必要的编译配置文件 ####　2.2.3 golang.cmake
+这个文件是在CMakeDetermineGoCompiler.cmake文件基础上实现了必要的Go代码编译函数,主要功能函数包括:
+go get 支持 : 为编译所需的外部包的引入提供自动加载功能 编译单体程序 : 编译指定路径下的go源代码,生成单体程序体 2.</description></item></channel></rss>
