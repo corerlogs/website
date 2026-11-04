@@ -1,0 +1,156 @@
+<!doctype html><html lang=zh-cn data-theme=light id=top><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>底层研究 · 思想痕迹</title>
+<meta name=description content="All conditioned phenomena, thus should you perceive them."><meta name=author content="LB"><meta name=color-scheme content="light dark"><meta name=theme-color content="#f4f4f1"><meta property="og:url" content="https://icorer.com/icorer_blog/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/"><meta property="og:site_name" content="思想痕迹"><meta property="og:title" content="底层研究"><meta property="og:description" content="All conditioned phenomena, thus should you perceive them."><meta property="og:locale" content="zh_cn"><meta property="og:type" content="website"><meta name=twitter:card content="summary"><meta name=twitter:title content="底层研究"><meta name=twitter:description content="All conditioned phenomena, thus should you perceive them."><meta name=twitter:site content="@lb_icefirelabs"><link rel=alternate hreflang=en href=https://icorer.com/icorer_blog/en/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/><link rel=icon href=/icorer_blog/img/favicon.ico sizes=any><link rel=apple-touch-icon href=/icorer_blog/apple-touch-icon.png><link rel=alternate type=application/rss+xml href=/icorer_blog/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/index.xml title=思想痕迹><script>(function(){try{var t=localStorage.getItem("trace-theme"),e=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.dataset.theme=t||(e?"dark":"light")}catch{}})()</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/icorer_blog/css/main.min.0bfa25a72fd8cf73f6edc8abd3b15df7005fcdcfca2bb71ba3a314b1235f8f10.css integrity="sha256-C/olpy/Yz3P27cir07Fd9wBfzc/KK7cbo6MUsSNfjxA="><script>document.documentElement.classList.add("js")</script></head><body><a class=skip href=#main>跳到正文</a><header class=nav><div class="nav__inner shell"><a class=nav__brand href=/icorer_blog/ aria-label=思想痕迹><span class=nav__brand-main>思想痕迹</span>
+<span class=nav__brand-sub>Traces of Thought</span></a><nav class=nav__links aria-label=主导航><a href=/icorer_blog/posts/>文章</a>
+<a href=/icorer_blog/tags/>主题</a>
+<a href=https://cv.icorer.com/ target=_blank rel=noopener>关于</a>
+<a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a></nav><div class=nav__tools><button class=icon-btn type=button data-search-open aria-label=搜索文章>
+<svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="8.6" cy="8.6" r="5.9"/><path d="m13 13 4 4"/></svg>
+</button>
+<a class=lang-switch href=/icorer_blog/en/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/ hreflang=en aria-label="Read in English">EN</a>
+<button class="icon-btn theme-btn" type=button data-theme-toggle aria-label=切换深浅色>
+<svg class="theme-btn__sun" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="10" cy="10" r="3.4"/><path d="M10 1.8v2.1m0 12.2v2.1M1.8 10h2.1m12.2.0h2.1M4.2 4.2l1.5 1.5m8.6 8.6 1.5 1.5m0-11.6-1.5 1.5M5.7 14.3l-1.5 1.5"/></svg>
+<svg class="theme-btn__moon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="M16.2 12.4A6.8 6.8.0 017.6 3.8a6.8 6.8.0 108.6 8.6z"/></svg>
+</button>
+<button class=nav__menu-btn type=button data-menu-open aria-label=打开菜单 aria-haspopup=dialog>
+<span>菜单</span><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="M2 6h16M2 14h16"/></svg></button></div></div></header><dialog class=menu id=menu aria-label=菜单><div class=menu__head><p class=menu__mark>思想痕迹</p><button class=icon-btn type=button data-menu-close aria-label=关闭菜单><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="m4 4 12 12M16 4 4 16"/></svg></button></div><nav class=menu__links aria-label=移动端导航><a href=/icorer_blog/posts/>文章</a>
+<a href=/icorer_blog/tags/>主题</a>
+<a href=https://cv.icorer.com/ target=_blank rel=noopener>关于</a>
+<a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a></nav><div class=menu__foot><button class=text-btn type=button data-search-open>搜索全部文章</button>
+<a class=lang-switch href=/icorer_blog/en/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/ hreflang=en aria-label="Read in English">EN</a></div></dialog><main id=main><header class="page-head shell"><h1>底层研究</h1><p class=page-head__lead>29 篇。</p></header><div class=shell><ol class="ledger ledger--archive"><li class=ledger__row data-entry data-text="基于区块链的pki管理框架  web3 zerotrust blockchain 以太坊 ethereum dcdn pki 新架构 零信任 底层研究 " data-reveal style=--d:0ms><a class=ledger__link href=/icorer_blog/posts/web3/blockchain-based-pki/><time class=ledger__date datetime=2023-12-16>2023.12.16</time>
+<span class=ledger__body><span class=ledger__title>基于区块链的PKI管理框架</span>
+<span class=ledger__desc>轻点放大 摘要 I.介绍 PKI问题及现有解决方案 基于日志的PKIs(Log-based PKIs) 信任网(WoT)（Web of Trust） 基于区块链的PKI（Blockchain-based PKI） II. …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="fleek network：去中心化边缘平台  web3 depin blockchain 以太坊 ethereum dcdn 新架构 底层研究 " data-reveal style=--d:45ms><a class=ledger__link href=/icorer_blog/posts/web3/fleek-network/><time class=ledger__date datetime=2023-08-03>2023.08.03</time>
+<span class=ledger__body><span class=ledger__title>Fleek Network：去中心化边缘平台</span>
+<span class=ledger__desc>轻点放大 概要 背景：网络的演变 现代Web堆栈的演变 Web3 的模块化和可组合式演变 将现代 Web 引入 Web3 Fleek Network：去中心化边缘平台 关键概念和性能优化 地理意识 智能路由&amp;amp;工作 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="cometbft：提升cosmos区块链共识新高度  web3 区块链 blockchain tendermint cosmos cometbft 底层研究 跨链 分布式 " data-reveal style=--d:90ms><a class=ledger__link href=/icorer_blog/posts/cosmos/cosmos-meet-cometbft/><time class=ledger__date datetime=2023-07-12>2023.07.12</time>
+<span class=ledger__body><span class=ledger__title>CometBFT：提升Cosmos区块链共识新高度</span>
+<span class=ledger__desc>轻点放大 Why Now? What’s Next? CometBFT 的目标是什么？ CometBFT 背后是谁？ 接下来的步骤是什么？ Common Questions CometBFT底层的共识算法是什么？ …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="tendermint abci分布式kv存储引擎分析  web3 区块链 blockchain tendermint 数据库 新架构 底层研究 跨链 分布式 " data-reveal style=--d:135ms><a class=ledger__link href=/icorer_blog/posts/web3/tendermint-distributed-kv-storage-engine-analysis/><time class=ledger__date datetime=2023-05-23>2023.05.23</time>
+<span class=ledger__body><span class=ledger__title>Tendermint ABCI分布式KV存储引擎分析</span>
+<span class=ledger__desc>轻点放大 背景介绍 1.Tendermint KV 模块分析 1.1 ABCI应用拦截Tendermint状态机 1.2 ABCI应用Application结构体分析 1.3 ABCI应用处理Tendermint 区 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="eip-4844改进提议：分片blob事务  web3 区块链 blockchain 以太坊 ethereum eip 新架构 底层研究 layer2 " data-reveal style=--d:180ms><a class=ledger__link href=/icorer_blog/posts/web3/eip-4844---reduced-l2-fees/><time class=ledger__date datetime=2023-02-27>2023.02.27</time>
+<span class=ledger__body><span class=ledger__title>EIP-4844改进提议：分片Blob事务</span>
+<span class=ledger__desc>轻点放大 EIP-4844 分片Blob事务以简单、向前兼容的方式扩展以太坊的数据可用性。
+一、摘要 二、动机 三、Specification 规范 3.1 Parameters 参数 3.2 Type aliases …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="sbt vs ssi：web3对数字身份解决方案的探索  web3 区块链 blockchain ssi sbt 新架构 底层研究 信息安全 " data-reveal style=--d:225ms><a class=ledger__link href=/icorer_blog/posts/web3/soulbound-tokens-vs-self-sovereign-identity/><time class=ledger__date datetime=2022-12-14>2022.12.14</time>
+<span class=ledger__body><span class=ledger__title>SBT vs SSI：Web3对数字身份解决方案的探索</span>
+<span class=ledger__desc>轻点放大 在题为“去中心化社会:寻找Web 3的灵魂”的研究论文中，以太坊(ETH)的联合创始人Vitalik Buterin 与 Glen Weyl、Puja Ahluwalia Ohlhaver 一起，介绍了“灵魂绑 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="身份验证世界中的自主身份：架构和领域用例  web3 区块链 blockchain ssi deca dpki 新架构 底层研究 信息安全 论文 " data-reveal style=--d:270ms><a class=ledger__link href=/icorer_blog/posts/web3/self-sovereign-identity-in-a-world-of-authenticationarchitecture-and-domain-usecases/><time class=ledger__date datetime=2022-12-13>2022.12.13</time>
+<span class=ledger__body><span class=ledger__title>身份验证世界中的自主身份：架构和领域用例</span>
+<span class=ledger__desc>轻点放大 摘要 自我主权身份 (SSI) 预计将以某种形式成为每个人生活的一部分。在与第三方组织打交道时，验证和验证一个人是否是他们声称的真实人物的能力以及保护个人属性的能力可能会产生广泛的影响。利用区块链和其他去中心化 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="self-sovereign identity：什么是自我主权身份？  web3 区块链 blockchain ssi deca dpki 新架构 底层研究 信息安全 " data-reveal style=--d:315ms><a class=ledger__link href=/icorer_blog/posts/web3/what-is-self-sovereign-identity/><time class=ledger__date datetime=2022-12-12>2022.12.12</time>
+<span class=ledger__body><span class=ledger__title>Self-Sovereign Identity：什么是自我主权身份？</span>
+<span class=ledger__desc>轻点放大 如今，我们日常生活的许多方面都依赖数字服务，从在线购物到所谓的 Web2.0 中的金融服务。我们使用多个（如果不是数百个）帐户与不同的集中式网络平台（例如社交媒体或电子邮件服务）进行交互。问题是，当我们无法访问 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="采用零信任模型的13个必备功能  零信任 云原生 cloudnative 底层研究 信息安全 行业报告 " data-reveal style=--d:360ms><a class=ledger__link href=/icorer_blog/posts/zerotrust/13-must-have-features-to-adopting-a-zero-trust-model/><time class=ledger__date datetime=2022-12-11>2022.12.11</time>
+<span class=ledger__body><span class=ledger__title>采用零信任模型的13个必备功能</span>
+<span class=ledger__desc>轻点放大 处理服务网格安全性的最佳方法是采用零信任模型，这意味着每个连接，无论其来源如何，都必须经过验证和保护。为了帮助您评估服务网格技术并实施零信任安全，我们展示了13个必备功能，以确保您的应用程序连接安全。
+1. 传 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="drand去中心化可验证随机数  drand web3 区块链 blockchain 新架构 底层研究 信息安全 " data-reveal style=--d:405ms><a class=ledger__link href=/icorer_blog/posts/web3/verifiable-random-number-drand-program-experiment/><time class=ledger__date datetime=2022-12-08>2022.12.08</time>
+<span class=ledger__body><span class=ledger__title>Drand去中心化可验证随机数</span>
+<span class=ledger__desc>轻点放大 Drand最初来自DEDIS 实验室，由于使用基于配对的密码学，drand 能够以非常简单和有效的方式生成随机性，并以可靠的方式将其交付给客户端。Drand 旨在成为一种分布式服务，以与应用程序无关、安全且高效 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="curl-vs-guzzle 性能测试  php 底层研究 性能测试 " data-reveal style=--d:450ms><a class=ledger__link href=/icorer_blog/posts/curl-vs-guzzle-performance-test/><time class=ledger__date datetime=2019-02-22>2019.02.22</time>
+<span class=ledger__body><span class=ledger__title>Curl-VS-Guzzle 性能测试</span>
+<span class=ledger__desc>Curl-VS-Guzzle 性能测试 这里项目围绕Curl 和 Guzzle这两个HTTP请求组件进行一些压力测试,看一下性能差距.我们围绕两个组件的连接复用情况来测试.(文章中会强调opcache的作用)
+一. 测试 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="io读取缓冲器-bufreader  底层研究 golang " data-reveal style=--d:495ms><a class=ledger__link href=/icorer_blog/posts/io-read-buffer---bufreader/><time class=ledger__date datetime=2019-01-03>2019.01.03</time>
+<span class=ledger__body><span class=ledger__title>IO读取缓冲器-BufReader</span>
+<span class=ledger__desc>一. IO问题思考 IO读取缓冲器,顾名思义就是针对系统的IO读取操作添加一层缓冲层,有这层缓冲层到底有啥好处呢?针对这个问题,我先问大家以下几个问题.
+对于IO读取操作,无论针对的是对象,还是针对网络,每次IO操作均需 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="源码阅读：yaf框架系列文章(3) - (yaf_application.c)  php php内核 底层研究 " data-reveal style=--d:540ms><a class=ledger__link href=/icorer_blog/posts/source-code-reading-yaf-framework-series-articles-3---yaf_application.c/><time class=ledger__date datetime=2018-11-22>2018.11.22</time>
+<span class=ledger__body><span class=ledger__title>源码阅读：YAF框架系列文章(3) - (yaf_application.c)</span>
+<span class=ledger__desc>这个文件主要围绕Yaf_Application类的注册，这里，按照倒叙的方式来进行讲解。
+一、注册yaf_application类
+YAF_STARTUP_FUNCTION(application) { //定义一 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="源码阅读：yaf框架系列文章(2) - (yaf.c)  php php内核 底层研究 " data-reveal style=--d:585ms><a class=ledger__link href=/icorer_blog/posts/source-code-reading-yaf-framework-series-articles-2---yaf.c/><time class=ledger__date datetime=2018-11-22>2018.11.22</time>
+<span class=ledger__body><span class=ledger__title>源码阅读：YAF框架系列文章(2) - (yaf.c)</span>
+<span class=ledger__desc>这个文件是yaf框架的整体组成框架文件，因为yaf的设计思路是模块化的，因此在这个文件中进行了总体整合。整合的思路分为以下几个部分。
+INI配置文件的解析 注册系统使用的常量 注册各个模块 对扩展模块的各个生命期做拦截监 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="源码阅读：yaf框架系列文章(1) - (php_yaf.h)  php php内核 底层研究 " data-reveal style=--d:630ms><a class=ledger__link href=/icorer_blog/posts/source-code-reading-yaf-framework-series-articles-1---php_yaf.h/><time class=ledger__date datetime=2018-11-21>2018.11.21</time>
+<span class=ledger__body><span class=ledger__title>源码阅读：YAF框架系列文章(1) - (php_yaf.h)</span>
+<span class=ledger__desc>这个文件的核心使命是构建yaf基础定义，这部分定义主要包括
+对于内核函数的宏定义 对于框架变量类型的宏定义 对于框架所使用的全局变量进行定义 一、对于内核函数进行宏定义
+#define …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="检测并分析php扩展的内存泄露  内存泄漏 底层研究 " data-reveal style=--d:675ms><a class=ledger__link href=/icorer_blog/posts/detect-and-analyze-memory-leaks-in-php-extensions/><time class=ledger__date datetime=2018-07-31>2018.07.31</time>
+<span class=ledger__body><span class=ledger__title>检测并分析PHP扩展的内存泄露</span>
+<span class=ledger__desc>1. 背景描述 基于C/C++开发的程序，内存管理是很大程度上的工作，我们在这篇文章里来给大家讲解一下如何监控程序体可能存在的内存泄露。
+工欲善其事必先利其器，这里选择使用 Valgrind 工作来进行内存监 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="编程笔记：c动态连接库编程  底层研究 " data-reveal style=--d:720ms><a class=ledger__link href=/icorer_blog/posts/programming-notes-c-dynamic-link-library-programming/><time class=ledger__date datetime=2018-07-24>2018.07.24</time>
+<span class=ledger__body><span class=ledger__title>编程笔记：C动态连接库编程</span>
+<span class=ledger__desc>动态链接库，可以方便程序体扩展功能、更新组件，相对于编译时连接，具有更大的灵活性，下面我们从三个方面来讲解一个案例。
+库函数定义 在这里，我们首先定义一个简单的加法函数。
+#include &amp;lt;stdio.h&amp;gt; …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="阅读笔记：动态内存分配 + 指针小结  底层研究 " data-reveal style=--d:765ms><a class=ledger__link href=/icorer_blog/posts/reading-notes-dynamic-memory-allocation-+-pointer-summary/><time class=ledger__date datetime=2018-07-23>2018.07.23</time>
+<span class=ledger__body><span class=ledger__title>阅读笔记：动态内存分配 + 指针小结</span>
+<span class=ledger__desc>1.什么是内存的动态分配 轻点放大 2.怎样建立内存分配 轻点放大 轻点放大 轻点放大 轻点放大 3. 指针小结 轻点放大 轻点放大 轻点放大 </span></span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="阅读笔记：指针数组和多重指针  底层研究 " data-reveal style=--d:810ms><a class=ledger__link href=/icorer_blog/posts/reading-notes-pointer-arrays-and-multiple-pointers/><time class=ledger__date datetime=2018-07-23>2018.07.23</time>
+<span class=ledger__body><span class=ledger__title>阅读笔记：指针数组和多重指针</span>
+<span class=ledger__desc>1. 什么是指针数组 一个数组，其元素均为指针类型的数据，被成为指针数组。也就是说，指针数组中的每一个元素都存放一个地址，相当于一个指针变量。下面定义一个指针数组。 轻点放大 ##1.1 样例分析 轻点放大 轻点放大 轻 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="阅读笔记：指针数组和多重指针  底层研究 " data-reveal style=--d:855ms><a class=ledger__link href=/icorer_blog/posts/reading-notes-c-language-function-pointer/><time class=ledger__date datetime=2018-07-23>2018.07.23</time>
+<span class=ledger__body><span class=ledger__title>阅读笔记：指针数组和多重指针</span>
+<span class=ledger__desc>1.指向函数的指针 1.1什么是指针函数# 轻点放大 1.2 怎样定义指向函数的指针变量# 定义指向函数的指针变量一般形式为： 轻点放大 例如 int (*p)(int a, int b); 这里的 “类型名” 是指函数 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="环境搭建：clion 搭建 php 扩展开发环境  php php内核 底层研究 " data-reveal style=--d:900ms><a class=ledger__link href=/icorer_blog/posts/clion-builds-a-php-extension-development-environment/><time class=ledger__date datetime=2018-07-10>2018.07.10</time>
+<span class=ledger__body><span class=ledger__title>环境搭建：CLion 搭建 PHP 扩展开发环境</span>
+<span class=ledger__desc>#1. PHP扩展代码框架搭建 此处，可以参考本博客原来的文章进行框架代码搭建。 【PHP扩展开发1：代码框架搭建】 2. 从源文件导入CLion工程 点击clion菜单栏File -&amp;gt; Import …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="编程笔记：c语言回调函数  clang 底层研究 " data-reveal style=--d:945ms><a class=ledger__link href=/icorer_blog/posts/programming-notes-c-language-callback-function/><time class=ledger__date datetime=2018-07-09>2018.07.09</time>
+<span class=ledger__body><span class=ledger__title>编程笔记：C语言回调函数</span>
+<span class=ledger__desc>在计算机程序设计中，回调函数，或简称回调（Callback 即call then back 被主函数调用运算后会返回主函数），是指通过函数参数传递到其它代码的，某一块可执行代码的引用。这一设计允许了底层代码调用在高层定义 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="源码阅读：php tsrm 线程安全管理器  php php内核 底层研究 " data-reveal style=--d:990ms><a class=ledger__link href=/icorer_blog/posts/source-code-reading-php-tsrm-thread-safety-manager/><time class=ledger__date datetime=2018-07-08>2018.07.08</time>
+<span class=ledger__body><span class=ledger__title>源码阅读：PHP TSRM 线程安全管理器</span>
+<span class=ledger__desc>TSRM 简介 在查看php源代码或开发php扩展的时候，会出现大量 TSRMLS_ 宏字样在函数参数的位置，这些宏就是Zend为线程安全机制所提供的（Zend Thread Safety，简称ZTS） …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="php扩展开发2.2：线程安全  php php内核 底层研究 " data-reveal style=--d:1035ms><a class=ledger__link href=/icorer_blog/posts/php-extension-development-2.2-thread-safety/><time class=ledger__date datetime=2018-07-06>2018.07.06</time>
+<span class=ledger__body><span class=ledger__title>PHP扩展开发2.2：线程安全</span>
+<span class=ledger__desc>背景介绍 线程安全是编程中的术语，指某个函数、函数库在多线程环境中被调用时，能够正确地处理多个线程之间的共享变量，使程序功能正确完成。
+一般来说，线程安全的函数应该为每个调用它的线程分配专门的空间，来储存需要单独保存的状 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="php扩展开发2.1：php生命周期  php php内核 底层研究 " data-reveal style=--d:1080ms><a class=ledger__link href=/icorer_blog/posts/php-extension-development-2.1-php-lifecycle/><time class=ledger__date datetime=2018-07-06>2018.07.06</time>
+<span class=ledger__body><span class=ledger__title>PHP扩展开发2.1：PHP生命周期</span>
+<span class=ledger__desc>#1. PHP SAPI 无论是Web模式、FastCgi模式、CLI模式，PHP的工作原理都是一样的，都是作为一种SAPI在运行（Server Application Programming Interface : …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="研究报告：java 与 golang 在 udp服务器上的性能对比  测试报告 研究报告 底层研究 " data-reveal style=--d:1125ms><a class=ledger__link href=/icorer_blog/posts/performance-comparison-between-java-and-golang-on-udp-server/><time class=ledger__date datetime=2018-07-03>2018.07.03</time>
+<span class=ledger__body><span class=ledger__title>研究报告：JAVA 与 Golang 在 UDP服务器上的性能对比</span>
+<span class=ledger__desc>背景介绍 因工作需求，目前需要采用UDP协议来存储用户日志信息，目前采用了JAVA 和 Golang 两种途径。
+#Linux内核优化（非常重要） 可以使用netstat -su 查看UDP是否有错包，如果查看到有UDP …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="nginx fast-cgi缓存优化  nginx 底层研究 " data-reveal style=--d:1170ms><a class=ledger__link href=/icorer_blog/posts/nginx-fast-cgi-cache-optimization/><time class=ledger__date datetime=2018-06-24>2018.06.24</time>
+<span class=ledger__body><span class=ledger__title>Nginx FAST-CGI缓存优化</span>
+<span class=ledger__desc>背景描述 传统的LNMP架构中，PHP-FPM对于PHP脚本进行解析工作，Nginx反向代理的时候，会把PHP请求转达给PHP-FPM。对于一个PHP站点，PHP-FPM的工作压力很巨大，所以，如果我们在Nginx层面上 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="解析 go 中的函数调用  golang 底层研究 " data-reveal style=--d:1215ms><a class=ledger__link href=/icorer_blog/posts/parsing-function-calls-in-go/><time class=ledger__date datetime=2018-06-08>2018.06.08</time>
+<span class=ledger__body><span class=ledger__title>解析 Go 中的函数调用</span>
+<span class=ledger__desc>让我们来看一些简单的 Go 的函数，然后看看我们能否明白函数调用是怎么回事。我们将通过分析 Go 编译器根据函数生成的汇编来完成这件事。对于一个小小的博客来讲，这样的目标可能有点不切实际，但是别担心，汇编语言很简单。哪怕 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li><li class=ledger__row data-entry data-text="pecl_http 与 unix domain socket 客户端封装  php php内核 底层研究 " data-reveal style=--d:1260ms><a class=ledger__link href=/icorer_blog/posts/pecl_http-and-unix-domain-socket-client-package/><time class=ledger__date datetime=2018-06-05>2018.06.05</time>
+<span class=ledger__body><span class=ledger__title>Pecl_Http 与 unix domain socket 客户端封装</span>
+<span class=ledger__desc>1. 背景描述# Pecl/HTTP是一个PHP扩展，历史非常悠久了，从2005年至2018年不断完善其功能，它主要帮助PHP对于HTTP请求的相关操作。不同于CURL，其具有更丰富的扩展接口，既包括平常的请求，也包括对 …</span>
+</span><span class=ledger__cat></span>
+<span class=ledger__arrow aria-hidden=true>→</span></a></li></ol></div></main><footer class=footer><div class=shell><div class=footer__top><p class=footer__mark>思想痕迹</p><a class=footer__top-link href=#top>回到顶部 <span aria-hidden=true>↑</span></a></div><div class=footer__grid><div class=footer__col><p class=footer__label>关于</p><p class=footer__note>一个关于智能体、系统与信任的个人写作空间。</p></div><div class=footer__col><p class=footer__label>浏览</p><a href=/icorer_blog/posts/>全部文章</a>
+<a href=/icorer_blog/tags/>按主题</a>
+<a href=/icorer_blog/index.xml>RSS</a></div><div class=footer__col><p class=footer__label>联系</p><a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a>
+<a href=https://twitter.com/lb_icefirelabs target=_blank rel=noopener>X / Twitter</a>
+<a href=https://cv.icorer.com/ target=_blank rel=noopener>CV</a>
+<a href=mailto:corerman@gmail.com>Email</a></div></div><div class=footer__base><p>© 2026 LB · 思想痕迹</p></div></div></footer><dialog class=search id=search aria-label=搜索文章 data-index=/icorer_blog/index.json><form class=search__bar role=search action=/icorer_blog/posts/ method=get data-search-form><svg class="search__icon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="8.6" cy="8.6" r="5.9"/><path d="m13 13 4 4"/></svg>
+<label class=visually-hidden for=search-input>搜索文章</label>
+<input id=search-input type=search name=q autocomplete=off spellcheck=false placeholder=标题、主题或关键词 data-search-input>
+<button class=search__close type=button data-search-close aria-label=关闭搜索>Esc</button></form><div class=search__body><p class=search__hint data-search-hint data-recent=最近更新>输入以在 75 篇文章中查找</p><ul class=search__results data-search-results aria-live=polite data-empty=没有找到匹配的文章。></ul><a class=search__all href=/icorer_blog/posts/ data-search-all>浏览全部文章 <span aria-hidden=true>→</span></a></div><p class=search__keys aria-hidden=true>↑ ↓ 选择 · Enter 打开 · Esc 关闭</p></dialog><script src=/icorer_blog/js/main.min.360bd193a6ab16099f22858c9061efb8cab1798e282a2d4f0f754b57bcbb9398.js defer></script></body></html>

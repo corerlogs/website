@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>MCP on 思想痕迹</title><link>https://icorer.com/icorer_blog/tags/mcp/</link><description>Recent content in MCP on 思想痕迹</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Wed, 04 Nov 2026 20:41:07 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/mcp/index.xml" rel="self" type="application/rss+xml"/><item><title>自动本体工程：英伟达 Auto-Ontology 的源码级拆解</title><link>https://icorer.com/icorer_blog/posts/ai/auto-ontology/</link><pubDate>Wed, 04 Nov 2026 20:41:07 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/auto-ontology/</guid><description>一句话：Auto-Ontology 把本体工程里最贵的那一个月自动化了——它读你的元数据和查询历史，编译出一张业务本体，再用 9 个只读工具交给 agent。但它交出来的是草稿：认证在这套代码里是展示用的徽章，不是查询路径上的闸门。
+中文配音版（男声），2 分 04 秒。中英两版内容一致，另有英文配音版。
+NVIDIA 在 2026 年 10 月 21 日的 GTC Berlin 上把它作为 Agent Knowledge Foundation 的一部分宣布，11 月 1 日以 Apache-2.0 开源。我读的是 caced11 这个提交（11 月 4 日克隆）的完整后端源码，下面是能逐条对回代码的判断。
+一、一次不会报错的错# 一个 agent 能写出跑得通的 SQL，这件事又容易又危险：一条跑通、返回一个「看似合理却错误」数字的查询，不会报错。
+最典型的现场是这张表。
+轻点放大 财务有三个列都能叫 revenue；销售说的 bookings 和财务说的 revenue 是两回事；一个一对多 join 会让总数静默翻倍，而 SQL 完全合法。传统 text-to-SQL 研究默认难题是「生成语法正确的 SQL」，于是堆模型能力。Auto-Ontology 的判断相反：语法正确不等于语义正确，真正缺的是那层告诉 agent「数据在哪、什么意思、能不能用、怎么用、从哪来、什么相似」的上下文。
+这层东西过去只活在数据工程师和业务人员脑子里。它的工作量集中在第一次交付——梳理来源表、定义对象关联、审核指标口径。这也是为什么大部分语义层项目死在第一周：平台装好了，然后没人能说清六个 revenue 定义里哪个是真的。
+二、它站在哪条脉络上# 「用本体给数据加一层语义，再把查询翻译回去」不是新想法，但谁来写这层本体变过两次。
+轻点放大 路线 本体/口径由谁写 后果 OBDA（本体驱动数据访问） 知识工程师人工建模，一条条映射 表达力强、推理可证；成本让它在企业里长期停在 PoC 语义层（dbt / Cube / LookML） 分析工程师写 YAML，人审 口径可信；从空白页到第一版仍要几周到几个月 LLM 起草 + 人审 模型给草稿，人签认证 第一天就有可审的东西；草稿与权威的界线必须由使用方自己划 学术上这两条线都有三十年积累。OBDA 的三层结构（数据源 / 映射 / 本体）与 Auto-Ontology 的 catalog / semantic FK / terms 几乎同构，区别只在于本体不再是人工建的。近三年这条线被 LLM 重写了一遍：《Towards Agentic Schema Refinement》（arXiv 2412.</description></item><item><title>去中心化、可信的 MCP 运行时：架构设计与实现</title><link>https://icorer.com/icorer_blog/posts/ai/trusted-mcp-runtime-architecture/</link><pubDate>Sun, 01 Nov 2026 12:00:00 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/trusted-mcp-runtime-architecture/</guid><description>一句话：把工具当成可寻址的产物、放进沙箱执行、用身份兜底，MCP 才配得上「可信」两个字。这是架构；后半篇是它的实现。
+一、问题：Agent 的工具，是黑盒# Agent 的能力边界不是模型，而是它能调到的工具。可今天的工具是黑盒：第三方代码、一工具一容器、集中托管。
+后果 现场表现 代价 来源不可验证 不知道跑的是哪一段字节，也不知道有没有被改过 不敢把敏感数据交给它 架构不可移植 x86 / ARM / RISC-V 各编一份二进制 工具到不了边缘 负载不可扩展 一容器一工具，冷启动 527–1119 ms、常驻 69–94 MB 小设备挂不起几个 这不是运维问题，是信任问题：你既不能核对它，也不能搬动它，还不能按需放它出去。
+二、行业研究走到哪一步了# 近两年围绕「MCP + WebAssembly」的研究，把这件事拆得比较清楚了。归纳成三个缺口和一组对策（数据与设计主张来自公开论文，实测环境为 Intel NUC）：
+缺口一：协议只有功能元数据。 MCP 的 tool schema 描述「叫什么、要什么参数、返回什么」，但没有「跑多久、吃不吃 CPU、数据在哪、能不能出设备」。调度器看不见执行需求，只能猜。
+缺口二：冷启动与指令集把边缘挡在门外。 容器化 MCP server 冷启动 527–1119 ms、常驻 69–94 MB；原生二进制要为每种 ISA 单独构建。数据集里 22.3% 的 server 只支持本地 stdio、77.7% 只支持远程 HTTP、0% 两者都支持——传输方式在编译期就被写死。
+缺口三：现有 SDK 绑死系统原语。 它们建在 thread / signal / socket 上，而 WASI 里这些都没有；于是 WASM 侧缺一个原生传输层，只能靠 sidecar 代理，反而把 WASM 省下的开销还了回去。</description></item></channel></rss>
