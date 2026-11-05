@@ -1,0 +1,544 @@
+<!doctype html><html lang=en-us data-theme=light id=top><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>源码阅读：C语言epoll模型 · Marginalia</title>
+<meta name=description content="背景 epoll是Linux内核为处理大批量文件描述符而作了改进的poll，是Linux下多路复用IO接口select/poll的增强版本，它能显著提高程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率。另一点原因就是获取事件的时候，它无须遍历整个被侦听的描述符集，只要遍历那些被内核IO事件异步唤醒而加入Ready队列的描述符集合就行了。epoll除 …"><meta name=author content="LB"><meta name=color-scheme content="light dark"><meta name=theme-color content="#f4f4f1"><meta property="og:url" content="https://icorer.com/icorer_blog/en/posts/source-code-reading-c-language-epoll-model/"><meta property="og:site_name" content="Marginalia"><meta property="og:title" content="源码阅读：C语言epoll模型 "><meta property="og:description" content='背景 epoll是Linux内核为处理大批量文件描述符而作了改进的poll，是Linux下多路复用IO接口select/poll的增强版本，它能显著提高程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率。另一点原因就是获取事件的时候，它无须遍历整个被侦听的描述符集，只要遍历那些被内核IO事件异步唤醒而加入Ready队列的描述符集合就行了。epoll除了提供select/poll那种IO事件的水平触发（Level Triggered）外，还提供了边缘触发（Edge Triggered），这就使得用户空间程序有可能缓存IO状态，减少epoll_wait/epoll_pwait的调用，提高应用程序效率。
+#模型代码 今天给大家分享一下EPOLL的相关模型代码：
+服务端代码# #include <sys/types.h> #include <sys/signalfd.h> #include <sys/epoll.h> #include <errno.h> #include <poll.h> #include <signal.h> #include <limits.h> #include <stdio.h> #include <stdlib.h> #include <unistd.h> #include <fcntl.h> #include <string.h> #include <assert.h> #include <sys/ioctl.h> #include <sys/socket.h> #include <netinet/in.h> #include <arpa/inet.h> #include "utarray.h" /***************************************************************************** * This program demonstrates epoll-based event notification. It monitors for * new client connections, input on existing connections or their closure, as * well as signals. The signals are also accepted via a file descriptor using * signalfd.'><meta property="og:locale" content="en_us"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2018-06-08T18:02:18+08:00"><meta property="article:modified_time" content="2018-06-08T18:02:18+08:00"><meta property="article:tag" content="CLang"><meta property="article:tag" content="Epoll"><meta property="article:tag" content="底层研究"><meta name=twitter:card content="summary"><meta name=twitter:title content="源码阅读：C语言epoll模型 "><meta name=twitter:description content='背景 epoll是Linux内核为处理大批量文件描述符而作了改进的poll，是Linux下多路复用IO接口select/poll的增强版本，它能显著提高程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率。另一点原因就是获取事件的时候，它无须遍历整个被侦听的描述符集，只要遍历那些被内核IO事件异步唤醒而加入Ready队列的描述符集合就行了。epoll除了提供select/poll那种IO事件的水平触发（Level Triggered）外，还提供了边缘触发（Edge Triggered），这就使得用户空间程序有可能缓存IO状态，减少epoll_wait/epoll_pwait的调用，提高应用程序效率。
+#模型代码 今天给大家分享一下EPOLL的相关模型代码：
+服务端代码# #include <sys/types.h> #include <sys/signalfd.h> #include <sys/epoll.h> #include <errno.h> #include <poll.h> #include <signal.h> #include <limits.h> #include <stdio.h> #include <stdlib.h> #include <unistd.h> #include <fcntl.h> #include <string.h> #include <assert.h> #include <sys/ioctl.h> #include <sys/socket.h> #include <netinet/in.h> #include <arpa/inet.h> #include "utarray.h" /***************************************************************************** * This program demonstrates epoll-based event notification. It monitors for * new client connections, input on existing connections or their closure, as * well as signals. The signals are also accepted via a file descriptor using * signalfd.'><meta name=twitter:site content="@lb_icefirelabs"><link rel=icon type=image/svg+xml href=/icorer_blog/favicon.svg><link rel=icon href=/icorer_blog/img/favicon.ico sizes=any><link rel=apple-touch-icon href=/icorer_blog/apple-touch-icon.png><script>(function(){try{var t=localStorage.getItem("trace-theme"),e=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.dataset.theme=t||(e?"dark":"light")}catch{}})()</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/icorer_blog/css/main.min.0bfa25a72fd8cf73f6edc8abd3b15df7005fcdcfca2bb71ba3a314b1235f8f10.css integrity="sha256-C/olpy/Yz3P27cir07Fd9wBfzc/KK7cbo6MUsSNfjxA="><script>document.documentElement.classList.add("js")</script></head><body><a class=skip href=#main>Skip to content</a><header class=nav><div class="nav__inner shell"><a class=nav__brand href=/icorer_blog/en/ aria-label=Marginalia><span class=nav__brand-main>Marginalia</span>
+<span class=nav__brand-sub>旁注旁观</span></a><nav class=nav__links aria-label=Primary><a href=/icorer_blog/en/posts/>Writing</a>
+<a href=/icorer_blog/en/tags/>Topics</a>
+<a href=https://cv.icorer.com/ target=_blank rel=noopener>About</a>
+<a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a></nav><div class=nav__tools><button class=icon-btn type=button data-search-open aria-label="Search writing">
+<svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="8.6" cy="8.6" r="5.9"/><path d="m13 13 4 4"/></svg>
+</button>
+<a class=lang-switch href=/icorer_blog/ hreflang=zh aria-label=阅读中文>中文</a>
+<button class="icon-btn theme-btn" type=button data-theme-toggle aria-label="Switch theme">
+<svg class="theme-btn__sun" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="10" cy="10" r="3.4"/><path d="M10 1.8v2.1m0 12.2v2.1M1.8 10h2.1m12.2.0h2.1M4.2 4.2l1.5 1.5m8.6 8.6 1.5 1.5m0-11.6-1.5 1.5M5.7 14.3l-1.5 1.5"/></svg>
+<svg class="theme-btn__moon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="M16.2 12.4A6.8 6.8.0 017.6 3.8a6.8 6.8.0 108.6 8.6z"/></svg>
+</button>
+<button class=nav__menu-btn type=button data-menu-open aria-label="Open menu" aria-haspopup=dialog>
+<span>Menu</span><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="M2 6h16M2 14h16"/></svg></button></div></div></header><dialog class=menu id=menu aria-label=Menu><div class=menu__head><p class=menu__mark>Marginalia</p><button class=icon-btn type=button data-menu-close aria-label="Close menu"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="m4 4 12 12M16 4 4 16"/></svg></button></div><nav class=menu__links aria-label="Mobile navigation"><a href=/icorer_blog/en/posts/>Writing</a>
+<a href=/icorer_blog/en/tags/>Topics</a>
+<a href=https://cv.icorer.com/ target=_blank rel=noopener>About</a>
+<a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a></nav><div class=menu__foot><button class=text-btn type=button data-search-open>Search all writing</button>
+<a class=lang-switch href=/icorer_blog/ hreflang=zh aria-label=阅读中文>中文</a></div></dialog><main id=main><article class=post data-poster><header class=post__header><h1 class=post__title data-reveal>源码阅读：C语言epoll模型</h1><p class="meta post__meta" data-reveal style=--d:120ms><time datetime=2018-06-08>Jun 8, 2018</time>
+<span>9 min</span>
+<span>LB</span></p></header><div class=post__grid><aside class=post__aside data-reveal><details class=toc-mobile><summary>Contents</summary><nav id=TableOfContentsMobile><ul><li><a href=#服务端代码>服务端代码</a></li><li><a href=#utarray头文件>utarray头文件</a></li></ul></nav></details><nav class="toc toc--desktop" aria-label=Contents><p class=toc__title>Contents</p><nav id=TableOfContents><ul><li><a href=#服务端代码>服务端代码</a></li><li><a href=#utarray头文件>utarray头文件</a></li></ul></nav></nav></aside><div class=post__prose data-prose><h1 id=背景>背景</h1><p>epoll是Linux内核为处理大批量文件描述符而作了改进的poll，是Linux下多路复用IO接口select/poll的增强版本，它能显著提高程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率。另一点原因就是获取事件的时候，它无须遍历整个被侦听的描述符集，只要遍历那些被内核IO事件异步唤醒而加入Ready队列的描述符集合就行了。epoll除了提供select/poll那种IO事件的水平触发（Level Triggered）外，还提供了边缘触发（Edge Triggered），这就使得用户空间程序有可能缓存IO状态，减少epoll_wait/epoll_pwait的调用，提高应用程序效率。</p><p>#模型代码
+今天给大家分享一下EPOLL的相关模型代码：</p><h2 id=服务端代码>服务端代码<a class=anchor href=#%e6%9c%8d%e5%8a%a1%e7%ab%af%e4%bb%a3%e7%a0%81 aria-label="Link to this section">#</a></h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;sys/types.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;sys/signalfd.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;sys/epoll.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;errno.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;poll.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;signal.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;limits.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;stdlib.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;unistd.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;fcntl.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;string.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;assert.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;sys/ioctl.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;sys/socket.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;netinet/in.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;arpa/inet.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&#34;utarray.h&#34;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cm>/*****************************************************************************
+</span></span></span><span class=line><span class=cl><span class=cm> * This program demonstrates epoll-based event notification. It monitors for
+</span></span></span><span class=line><span class=cl><span class=cm> * new client connections, input on existing connections or their closure, as
+</span></span></span><span class=line><span class=cl><span class=cm> * well as signals. The signals are also accepted via a file descriptor using
+</span></span></span><span class=line><span class=cl><span class=cm> * signalfd. This program uses blocking I/O in all cases. The epoll mechanism
+</span></span></span><span class=line><span class=cl><span class=cm> * tell us which exactly which descriptor is ready, when it is ready, so there
+</span></span></span><span class=line><span class=cl><span class=cm> * is no need for speculative/non-blocking reads. This program is more
+</span></span></span><span class=line><span class=cl><span class=cm> * efficient than sigio-server.c.
+</span></span></span><span class=line><span class=cl><span class=cm> *
+</span></span></span><span class=line><span class=cl><span class=cm> * Troy D. Hanson
+</span></span></span><span class=line><span class=cl><span class=cm> ****************************************************************************/</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>struct</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=kt>in_addr_t</span> <span class=n>addr</span><span class=p>;</span>    <span class=cm>/* local IP or INADDR_ANY   */</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>port</span><span class=p>;</span>          <span class=cm>/* local port to listen on  */</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>fd</span><span class=p>;</span>            <span class=cm>/* listener descriptor      */</span>
+</span></span><span class=line><span class=cl>  <span class=n>UT_array</span> <span class=o>*</span><span class=n>fds</span><span class=p>;</span>     <span class=cm>/* array of client descriptors */</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>signal_fd</span><span class=p>;</span>     <span class=cm>/* used to receive signals  */</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>epoll_fd</span><span class=p>;</span>      <span class=cm>/* used for all notification*/</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>verbose</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>ticks</span><span class=p>;</span>         <span class=cm>/* uptime in seconds        */</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>pid</span><span class=p>;</span>           <span class=cm>/* our own pid              */</span>
+</span></span><span class=line><span class=cl>  <span class=kt>char</span> <span class=o>*</span><span class=n>prog</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span> <span class=n>cfg</span> <span class=o>=</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=p>.</span><span class=n>addr</span> <span class=o>=</span> <span class=n>INADDR_ANY</span><span class=p>,</span> <span class=cm>/* by default, listen on all local IP&#39;s   */</span>
+</span></span><span class=line><span class=cl>  <span class=p>.</span><span class=n>fd</span> <span class=o>=</span> <span class=o>-</span><span class=mi>1</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>  <span class=p>.</span><span class=n>signal_fd</span> <span class=o>=</span> <span class=o>-</span><span class=mi>1</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>  <span class=p>.</span><span class=n>epoll_fd</span> <span class=o>=</span> <span class=o>-</span><span class=mi>1</span><span class=p>,</span>
+</span></span><span class=line><span class=cl><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>usage</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;usage: %s [-v] [-a &lt;ip&gt;] -p &lt;port</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>cfg</span><span class=p>.</span><span class=n>prog</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=nf>exit</span><span class=p>(</span><span class=o>-</span><span class=mi>1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cm>/* do periodic work here */</span>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>periodic</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>verbose</span><span class=p>)</span> <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;up %d seconds</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>cfg</span><span class=p>.</span><span class=n>ticks</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>add_epoll</span><span class=p>(</span><span class=kt>int</span> <span class=n>events</span><span class=p>,</span> <span class=kt>int</span> <span class=n>fd</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>rc</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=k>struct</span> <span class=n>epoll_event</span> <span class=n>ev</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=nf>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>ev</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=k>sizeof</span><span class=p>(</span><span class=n>ev</span><span class=p>));</span> <span class=c1>// placate valgrind
+</span></span></span><span class=line><span class=cl><span class=c1></span>  <span class=n>ev</span><span class=p>.</span><span class=n>events</span> <span class=o>=</span> <span class=n>events</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=n>ev</span><span class=p>.</span><span class=n>data</span><span class=p>.</span><span class=n>fd</span><span class=o>=</span> <span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>verbose</span><span class=p>)</span> <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;adding fd %d to epoll</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=n>rc</span> <span class=o>=</span> <span class=nf>epoll_ctl</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>epoll_fd</span><span class=p>,</span> <span class=n>EPOLL_CTL_ADD</span><span class=p>,</span> <span class=n>fd</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>ev</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>rc</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;epoll_ctl: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>  <span class=k>return</span> <span class=n>rc</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>del_epoll</span><span class=p>(</span><span class=kt>int</span> <span class=n>fd</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>rc</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=k>struct</span> <span class=n>epoll_event</span> <span class=n>ev</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=n>rc</span> <span class=o>=</span> <span class=nf>epoll_ctl</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>epoll_fd</span><span class=p>,</span> <span class=n>EPOLL_CTL_DEL</span><span class=p>,</span> <span class=n>fd</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>ev</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>rc</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;epoll_ctl: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>  <span class=k>return</span> <span class=n>rc</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cm>/* signals that we&#39;ll accept synchronously via signalfd */</span>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=n>sigs</span><span class=p>[]</span> <span class=o>=</span> <span class=p>{</span><span class=n>SIGIO</span><span class=p>,</span><span class=n>SIGHUP</span><span class=p>,</span><span class=n>SIGTERM</span><span class=p>,</span><span class=n>SIGINT</span><span class=p>,</span><span class=n>SIGQUIT</span><span class=p>,</span><span class=n>SIGALRM</span><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>setup_listener</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>rc</span> <span class=o>=</span> <span class=o>-</span><span class=mi>1</span><span class=p>,</span> <span class=n>one</span><span class=o>=</span><span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>fd</span> <span class=o>=</span> <span class=nf>socket</span><span class=p>(</span><span class=n>AF_INET</span><span class=p>,</span> <span class=n>SOCK_STREAM</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>fd</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;socket: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=k>goto</span> <span class=n>done</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/**********************************************************
+</span></span></span><span class=line><span class=cl><span class=cm>   * internet socket address structure: our address and port
+</span></span></span><span class=line><span class=cl><span class=cm>   *********************************************************/</span>
+</span></span><span class=line><span class=cl>  <span class=k>struct</span> <span class=n>sockaddr_in</span> <span class=n>sin</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=n>sin</span><span class=p>.</span><span class=n>sin_family</span> <span class=o>=</span> <span class=n>AF_INET</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=n>sin</span><span class=p>.</span><span class=n>sin_addr</span><span class=p>.</span><span class=n>s_addr</span> <span class=o>=</span> <span class=n>cfg</span><span class=p>.</span><span class=n>addr</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=n>sin</span><span class=p>.</span><span class=n>sin_port</span> <span class=o>=</span> <span class=nf>htons</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>port</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/**********************************************************
+</span></span></span><span class=line><span class=cl><span class=cm>   * bind socket to address and port 
+</span></span></span><span class=line><span class=cl><span class=cm>   *********************************************************/</span>
+</span></span><span class=line><span class=cl>  <span class=nf>setsockopt</span><span class=p>(</span><span class=n>fd</span><span class=p>,</span> <span class=n>SOL_SOCKET</span><span class=p>,</span> <span class=n>SO_REUSEADDR</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>one</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>one</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=nf>bind</span><span class=p>(</span><span class=n>fd</span><span class=p>,</span> <span class=p>(</span><span class=k>struct</span> <span class=n>sockaddr</span><span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>sin</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>sin</span><span class=p>))</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;bind: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=k>goto</span> <span class=n>done</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/**********************************************************
+</span></span></span><span class=line><span class=cl><span class=cm>   * put socket into listening state
+</span></span></span><span class=line><span class=cl><span class=cm>   *********************************************************/</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=nf>listen</span><span class=p>(</span><span class=n>fd</span><span class=p>,</span><span class=mi>1</span><span class=p>)</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;listen: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=k>goto</span> <span class=n>done</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=n>cfg</span><span class=p>.</span><span class=n>fd</span> <span class=o>=</span> <span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=n>rc</span><span class=o>=</span><span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> <span class=nl>done</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>((</span><span class=n>rc</span> <span class=o>&lt;</span> <span class=mi>0</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=p>(</span><span class=n>fd</span> <span class=o>!=</span> <span class=o>-</span><span class=mi>1</span><span class=p>))</span> <span class=nf>close</span><span class=p>(</span><span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>return</span> <span class=n>rc</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cm>/* accept a new client connection to the listening socket */</span>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>accept_client</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=k>struct</span> <span class=n>sockaddr_in</span> <span class=n>in</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=kt>socklen_t</span> <span class=n>sz</span> <span class=o>=</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>in</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=n>fd</span> <span class=o>=</span> <span class=nf>accept</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fd</span><span class=p>,(</span><span class=k>struct</span> <span class=n>sockaddr</span><span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>in</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>sz</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>fd</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;accept: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span> 
+</span></span><span class=line><span class=cl>    <span class=k>goto</span> <span class=n>done</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>verbose</span> <span class=o>&amp;&amp;</span> <span class=p>(</span><span class=k>sizeof</span><span class=p>(</span><span class=n>in</span><span class=p>)</span><span class=o>==</span><span class=n>sz</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;connection fd %d from %s:%d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>fd</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=nf>inet_ntoa</span><span class=p>(</span><span class=n>in</span><span class=p>.</span><span class=n>sin_addr</span><span class=p>),</span> <span class=p>(</span><span class=kt>int</span><span class=p>)</span><span class=nf>ntohs</span><span class=p>(</span><span class=n>in</span><span class=p>.</span><span class=n>sin_port</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=nf>add_epoll</span><span class=p>(</span><span class=n>EPOLLIN</span><span class=p>,</span> <span class=n>fd</span><span class=p>)</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span> <span class=nf>close</span><span class=p>(</span><span class=n>fd</span><span class=p>);</span> <span class=n>fd</span> <span class=o>=</span> <span class=o>-</span><span class=mi>1</span><span class=p>;</span> <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> <span class=nl>done</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>fd</span> <span class=o>!=</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=nf>utarray_push_back</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fds</span><span class=p>,</span><span class=o>&amp;</span><span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>return</span> <span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>drain_client</span><span class=p>(</span><span class=kt>int</span> <span class=n>fd</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>rc</span><span class=p>,</span> <span class=n>pos</span><span class=p>,</span> <span class=o>*</span><span class=n>fp</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=kt>char</span> <span class=n>buf</span><span class=p>[</span><span class=mi>1024</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=n>rc</span> <span class=o>=</span> <span class=nf>read</span><span class=p>(</span><span class=n>fd</span><span class=p>,</span> <span class=n>buf</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>buf</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>  <span class=k>switch</span><span class=p>(</span><span class=n>rc</span><span class=p>)</span> <span class=p>{</span> 
+</span></span><span class=line><span class=cl>    <span class=k>default</span><span class=o>:</span> <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;received %d bytes</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>rc</span><span class=p>);</span>         <span class=k>break</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>case</span>  <span class=mi>0</span><span class=o>:</span> <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;fd %d closed</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>fd</span><span class=p>);</span>              <span class=k>break</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>case</span> <span class=o>-</span><span class=mi>1</span><span class=o>:</span> <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;recv: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span>    <span class=k>break</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>rc</span> <span class=o>!=</span> <span class=mi>0</span><span class=p>)</span> <span class=k>return</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/* client closed. log it, tell epoll to forget it, close it */</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>verbose</span><span class=p>)</span> <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;client %d has closed</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=nf>del_epoll</span><span class=p>(</span><span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=nf>close</span><span class=p>(</span><span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/* delete record of fd. linear scan. want hash if lots of fds */</span>
+</span></span><span class=line><span class=cl>  <span class=n>fp</span><span class=o>=</span><span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=k>while</span> <span class=p>(</span> <span class=p>(</span><span class=n>fp</span><span class=o>=</span><span class=p>(</span><span class=kt>int</span><span class=o>*</span><span class=p>)</span><span class=nf>utarray_next</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fds</span><span class=p>,</span><span class=n>fp</span><span class=p>)))</span> <span class=p>{</span> 
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=o>*</span><span class=n>fp</span> <span class=o>!=</span> <span class=n>fd</span><span class=p>)</span> <span class=k>continue</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>pos</span> <span class=o>=</span> <span class=nf>utarray_eltidx</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fds</span><span class=p>,</span><span class=n>fp</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nf>utarray_erase</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fds</span><span class=p>,</span><span class=n>pos</span><span class=p>,</span><span class=mi>1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>break</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=kt>char</span> <span class=o>*</span><span class=n>argv</span><span class=p>[])</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=n>cfg</span><span class=p>.</span><span class=n>prog</span> <span class=o>=</span> <span class=n>argv</span><span class=p>[</span><span class=mi>0</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>  <span class=n>cfg</span><span class=p>.</span><span class=n>prog</span><span class=o>=</span><span class=n>argv</span><span class=p>[</span><span class=mi>0</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>  <span class=n>cfg</span><span class=p>.</span><span class=n>pid</span> <span class=o>=</span> <span class=nf>getpid</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>n</span><span class=p>,</span> <span class=n>opt</span><span class=p>,</span> <span class=o>*</span><span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=k>struct</span> <span class=n>epoll_event</span> <span class=n>ev</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=k>struct</span> <span class=n>signalfd_siginfo</span> <span class=n>info</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=nf>utarray_new</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fds</span><span class=p>,</span><span class=o>&amp;</span><span class=n>ut_int_icd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>while</span> <span class=p>(</span> <span class=p>(</span><span class=n>opt</span><span class=o>=</span><span class=nf>getopt</span><span class=p>(</span><span class=n>argc</span><span class=p>,</span><span class=n>argv</span><span class=p>,</span><span class=s>&#34;vp:a:h&#34;</span><span class=p>))</span> <span class=o>!=</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>switch</span><span class=p>(</span><span class=n>opt</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>      <span class=k>case</span> <span class=sc>&#39;v&#39;</span><span class=o>:</span> <span class=n>cfg</span><span class=p>.</span><span class=n>verbose</span><span class=o>++</span><span class=p>;</span> <span class=k>break</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>      <span class=k>case</span> <span class=sc>&#39;p&#39;</span><span class=o>:</span> <span class=n>cfg</span><span class=p>.</span><span class=n>port</span><span class=o>=</span><span class=nf>atoi</span><span class=p>(</span><span class=n>optarg</span><span class=p>);</span> <span class=k>break</span><span class=p>;</span> 
+</span></span><span class=line><span class=cl>      <span class=k>case</span> <span class=sc>&#39;a&#39;</span><span class=o>:</span> <span class=n>cfg</span><span class=p>.</span><span class=n>addr</span><span class=o>=</span><span class=nf>inet_addr</span><span class=p>(</span><span class=n>optarg</span><span class=p>);</span> <span class=k>break</span><span class=p>;</span> 
+</span></span><span class=line><span class=cl>      <span class=k>case</span> <span class=sc>&#39;h&#39;</span><span class=o>:</span> <span class=k>default</span><span class=o>:</span> <span class=nf>usage</span><span class=p>();</span> <span class=k>break</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>addr</span> <span class=o>==</span> <span class=n>INADDR_NONE</span><span class=p>)</span> <span class=nf>usage</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>port</span><span class=o>==</span><span class=mi>0</span><span class=p>)</span> <span class=nf>usage</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/* block all signals. we take signals synchronously via signalfd */</span>
+</span></span><span class=line><span class=cl>  <span class=kt>sigset_t</span> <span class=n>all</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=nf>sigfillset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>all</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=nf>sigprocmask</span><span class=p>(</span><span class=n>SIG_SETMASK</span><span class=p>,</span><span class=o>&amp;</span><span class=n>all</span><span class=p>,</span><span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/* a few signals we&#39;ll accept via our signalfd */</span>
+</span></span><span class=line><span class=cl>  <span class=kt>sigset_t</span> <span class=n>sw</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=nf>sigemptyset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>sw</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>for</span><span class=p>(</span><span class=n>n</span><span class=o>=</span><span class=mi>0</span><span class=p>;</span> <span class=n>n</span> <span class=o>&lt;</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>sigs</span><span class=p>)</span><span class=o>/</span><span class=k>sizeof</span><span class=p>(</span><span class=o>*</span><span class=n>sigs</span><span class=p>);</span> <span class=n>n</span><span class=o>++</span><span class=p>)</span> <span class=nf>sigaddset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>sw</span><span class=p>,</span> <span class=n>sigs</span><span class=p>[</span><span class=n>n</span><span class=p>]);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=nf>setup_listener</span><span class=p>())</span> <span class=k>goto</span> <span class=n>done</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/* create the signalfd for receiving signals */</span>
+</span></span><span class=line><span class=cl>  <span class=n>cfg</span><span class=p>.</span><span class=n>signal_fd</span> <span class=o>=</span> <span class=nf>signalfd</span><span class=p>(</span><span class=o>-</span><span class=mi>1</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>sw</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>signal_fd</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;signalfd: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=k>goto</span> <span class=n>done</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/* set up the epoll instance */</span>
+</span></span><span class=line><span class=cl>  <span class=n>cfg</span><span class=p>.</span><span class=n>epoll_fd</span> <span class=o>=</span> <span class=nf>epoll_create</span><span class=p>(</span><span class=mi>1</span><span class=p>);</span> 
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>epoll_fd</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;epoll: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=k>goto</span> <span class=n>done</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=cm>/* add descriptors of interest */</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=nf>add_epoll</span><span class=p>(</span><span class=n>EPOLLIN</span><span class=p>,</span> <span class=n>cfg</span><span class=p>.</span><span class=n>fd</span><span class=p>))</span>        <span class=k>goto</span> <span class=n>done</span><span class=p>;</span> <span class=c1>// listening socket
+</span></span></span><span class=line><span class=cl><span class=c1></span>  <span class=k>if</span> <span class=p>(</span><span class=nf>add_epoll</span><span class=p>(</span><span class=n>EPOLLIN</span><span class=p>,</span> <span class=n>cfg</span><span class=p>.</span><span class=n>signal_fd</span><span class=p>))</span> <span class=k>goto</span> <span class=n>done</span><span class=p>;</span> <span class=c1>// signal socket
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>  <span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>   * This is our main loop. epoll for input or signals.
+</span></span></span><span class=line><span class=cl><span class=cm>   */</span>
+</span></span><span class=line><span class=cl>  <span class=nf>alarm</span><span class=p>(</span><span class=mi>1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>while</span> <span class=p>(</span><span class=nf>epoll_wait</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>epoll_fd</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>ev</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=o>&gt;</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=cm>/* if a signal was sent to us, read its signalfd_siginfo */</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>ev</span><span class=p>.</span><span class=n>data</span><span class=p>.</span><span class=n>fd</span> <span class=o>==</span> <span class=n>cfg</span><span class=p>.</span><span class=n>signal_fd</span><span class=p>)</span> <span class=p>{</span> 
+</span></span><span class=line><span class=cl>      <span class=k>if</span> <span class=p>(</span><span class=nf>read</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>signal_fd</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>info</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>info</span><span class=p>))</span> <span class=o>!=</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>info</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;failed to read signal fd buffer</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>continue</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>      <span class=p>}</span>
+</span></span><span class=line><span class=cl>      <span class=k>switch</span> <span class=p>(</span><span class=n>info</span><span class=p>.</span><span class=n>ssi_signo</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>case</span> <span class=nl>SIGALRM</span><span class=p>:</span> 
+</span></span><span class=line><span class=cl>          <span class=k>if</span> <span class=p>((</span><span class=o>++</span><span class=n>cfg</span><span class=p>.</span><span class=n>ticks</span> <span class=o>%</span> <span class=mi>10</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=nf>periodic</span><span class=p>();</span> 
+</span></span><span class=line><span class=cl>          <span class=nf>alarm</span><span class=p>(</span><span class=mi>1</span><span class=p>);</span> 
+</span></span><span class=line><span class=cl>          <span class=k>continue</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=k>default</span><span class=o>:</span>  <span class=cm>/* exit */</span>
+</span></span><span class=line><span class=cl>          <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;got signal %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>info</span><span class=p>.</span><span class=n>ssi_signo</span><span class=p>);</span>  
+</span></span><span class=line><span class=cl>          <span class=k>goto</span> <span class=n>done</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>      <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=cm>/* regular POLLIN. handle the particular descriptor that&#39;s ready */</span>
+</span></span><span class=line><span class=cl>    <span class=nf>assert</span><span class=p>(</span><span class=n>ev</span><span class=p>.</span><span class=n>events</span> <span class=o>&amp;</span> <span class=n>EPOLLIN</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>verbose</span><span class=p>)</span> <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=s>&#34;handle POLLIN on fd %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>ev</span><span class=p>.</span><span class=n>data</span><span class=p>.</span><span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>ev</span><span class=p>.</span><span class=n>data</span><span class=p>.</span><span class=n>fd</span> <span class=o>==</span> <span class=n>cfg</span><span class=p>.</span><span class=n>fd</span><span class=p>)</span> <span class=nf>accept_client</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span> <span class=nf>drain_client</span><span class=p>(</span><span class=n>ev</span><span class=p>.</span><span class=n>data</span><span class=p>.</span><span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;epoll_wait: %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=nf>strerror</span><span class=p>(</span><span class=n>errno</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl> <span class=nl>done</span><span class=p>:</span>   <span class=cm>/* we get here if we got a signal like Ctrl-C */</span>
+</span></span><span class=line><span class=cl>  <span class=n>fd</span><span class=o>=</span><span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=k>while</span> <span class=p>(</span> <span class=p>(</span><span class=n>fd</span><span class=o>=</span><span class=p>(</span><span class=kt>int</span><span class=o>*</span><span class=p>)</span><span class=nf>utarray_next</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fds</span><span class=p>,</span><span class=n>fd</span><span class=p>)))</span> <span class=p>{</span><span class=nf>del_epoll</span><span class=p>(</span><span class=o>*</span><span class=n>fd</span><span class=p>);</span> <span class=nf>close</span><span class=p>(</span><span class=o>*</span><span class=n>fd</span><span class=p>);}</span>
+</span></span><span class=line><span class=cl>  <span class=nf>utarray_free</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fds</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fd</span> <span class=o>!=</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=nf>close</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>epoll_fd</span> <span class=o>!=</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=nf>close</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>epoll_fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>signal_fd</span> <span class=o>!=</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=nf>close</span><span class=p>(</span><span class=n>cfg</span><span class=p>.</span><span class=n>signal_fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>  <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></div><h2 id=utarray头文件>utarray头文件<a class=anchor href=#utarray%e5%a4%b4%e6%96%87%e4%bb%b6 aria-label="Link to this section">#</a></h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>Copyright (c) 2008-2014, Troy D. Hanson   http://troydhanson.github.com/uthash/
+</span></span></span><span class=line><span class=cl><span class=cm>All rights reserved.
+</span></span></span><span class=line><span class=cl><span class=cm>
+</span></span></span><span class=line><span class=cl><span class=cm>Redistribution and use in source and binary forms, with or without
+</span></span></span><span class=line><span class=cl><span class=cm>modification, are permitted provided that the following conditions are met:
+</span></span></span><span class=line><span class=cl><span class=cm>
+</span></span></span><span class=line><span class=cl><span class=cm>    * Redistributions of source code must retain the above copyright
+</span></span></span><span class=line><span class=cl><span class=cm>      notice, this list of conditions and the following disclaimer.
+</span></span></span><span class=line><span class=cl><span class=cm>
+</span></span></span><span class=line><span class=cl><span class=cm>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &#34;AS
+</span></span></span><span class=line><span class=cl><span class=cm>IS&#34; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+</span></span></span><span class=line><span class=cl><span class=cm>TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+</span></span></span><span class=line><span class=cl><span class=cm>PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+</span></span></span><span class=line><span class=cl><span class=cm>OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+</span></span></span><span class=line><span class=cl><span class=cm>EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+</span></span></span><span class=line><span class=cl><span class=cm>PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+</span></span></span><span class=line><span class=cl><span class=cm>PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+</span></span></span><span class=line><span class=cl><span class=cm>LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+</span></span></span><span class=line><span class=cl><span class=cm>NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+</span></span></span><span class=line><span class=cl><span class=cm>SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</span></span></span><span class=line><span class=cl><span class=cm>*/</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cm>/* a dynamic array implementation using macros 
+</span></span></span><span class=line><span class=cl><span class=cm> */</span>
+</span></span><span class=line><span class=cl><span class=cp>#ifndef UTARRAY_H
+</span></span></span><span class=line><span class=cl><span class=cp>#define UTARRAY_H
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define UTARRAY_VERSION 1.9.9
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#ifdef __GNUC__
+</span></span></span><span class=line><span class=cl><span class=cp>#define _UNUSED_ __attribute__ ((__unused__)) 
+</span></span></span><span class=line><span class=cl><span class=cp>#else
+</span></span></span><span class=line><span class=cl><span class=cp>#define _UNUSED_ 
+</span></span></span><span class=line><span class=cl><span class=cp>#endif
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;stddef.h&gt;  /* size_t */</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;string.h&gt;  /* memset, etc */</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;stdlib.h&gt;  /* exit */</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define oom() exit(-1)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=k>typedef</span> <span class=nf>void</span> <span class=p>(</span><span class=n>ctor_f</span><span class=p>)(</span><span class=kt>void</span> <span class=o>*</span><span class=n>dst</span><span class=p>,</span> <span class=k>const</span> <span class=kt>void</span> <span class=o>*</span><span class=n>src</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=k>typedef</span> <span class=nf>void</span> <span class=p>(</span><span class=n>dtor_f</span><span class=p>)(</span><span class=kt>void</span> <span class=o>*</span><span class=n>elt</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=k>typedef</span> <span class=nf>void</span> <span class=p>(</span><span class=n>init_f</span><span class=p>)(</span><span class=kt>void</span> <span class=o>*</span><span class=n>elt</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=k>typedef</span> <span class=k>struct</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>size_t</span> <span class=n>sz</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>init_f</span> <span class=o>*</span><span class=n>init</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>ctor_f</span> <span class=o>*</span><span class=n>copy</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>dtor_f</span> <span class=o>*</span><span class=n>dtor</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span> <span class=n>UT_icd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>typedef</span> <span class=k>struct</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>unsigned</span> <span class=n>i</span><span class=p>,</span><span class=n>n</span><span class=p>;</span><span class=cm>/* i: index of next available slot, n: num slots */</span>
+</span></span><span class=line><span class=cl>    <span class=n>UT_icd</span> <span class=n>icd</span><span class=p>;</span>  <span class=cm>/* initializer, copy and destructor functions */</span>
+</span></span><span class=line><span class=cl>    <span class=kt>char</span> <span class=o>*</span><span class=n>d</span><span class=p>;</span>     <span class=cm>/* n slots of size icd-&gt;sz*/</span>
+</span></span><span class=line><span class=cl><span class=p>}</span> <span class=n>UT_array</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_init(a,_icd) do {                                             \
+</span></span></span><span class=line><span class=cl><span class=cp>  memset(a,0,sizeof(UT_array));                                               \
+</span></span></span><span class=line><span class=cl><span class=cp>  (a)-&gt;icd=*_icd;                                                             \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_done(a) do {                                                  \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((a)-&gt;n) {                                                               \
+</span></span></span><span class=line><span class=cl><span class=cp>    if ((a)-&gt;icd.dtor) {                                                      \
+</span></span></span><span class=line><span class=cl><span class=cp>      size_t _ut_i;                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>      for(_ut_i=0; _ut_i &lt; (a)-&gt;i; _ut_i++) {                                 \
+</span></span></span><span class=line><span class=cl><span class=cp>        (a)-&gt;icd.dtor(utarray_eltptr(a,_ut_i));                               \
+</span></span></span><span class=line><span class=cl><span class=cp>      }                                                                       \
+</span></span></span><span class=line><span class=cl><span class=cp>    }                                                                         \
+</span></span></span><span class=line><span class=cl><span class=cp>    free((a)-&gt;d);                                                             \
+</span></span></span><span class=line><span class=cl><span class=cp>  }                                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  (a)-&gt;n=0;                                                                   \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_new(a,_icd) do {                                              \
+</span></span></span><span class=line><span class=cl><span class=cp>  a=(UT_array*)malloc(sizeof(UT_array));                                      \
+</span></span></span><span class=line><span class=cl><span class=cp>  utarray_init(a,_icd);                                                       \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_free(a) do {                                                  \
+</span></span></span><span class=line><span class=cl><span class=cp>  utarray_done(a);                                                            \
+</span></span></span><span class=line><span class=cl><span class=cp>  free(a);                                                                    \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_reserve(a,by) do {                                            \
+</span></span></span><span class=line><span class=cl><span class=cp>  if (((a)-&gt;i+by) &gt; ((a)-&gt;n)) {                                               \
+</span></span></span><span class=line><span class=cl><span class=cp>    while(((a)-&gt;i+by) &gt; ((a)-&gt;n)) { (a)-&gt;n = ((a)-&gt;n ? (2*(a)-&gt;n) : 8); }     \
+</span></span></span><span class=line><span class=cl><span class=cp>    if ( ((a)-&gt;d=(char*)realloc((a)-&gt;d, (a)-&gt;n*(a)-&gt;icd.sz)) == NULL) oom();  \
+</span></span></span><span class=line><span class=cl><span class=cp>  }                                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_push_back(a,p) do {                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  utarray_reserve(a,1);                                                       \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((a)-&gt;icd.copy) { (a)-&gt;icd.copy( _utarray_eltptr(a,(a)-&gt;i++), p); }      \
+</span></span></span><span class=line><span class=cl><span class=cp>  else { memcpy(_utarray_eltptr(a,(a)-&gt;i++), p, (a)-&gt;icd.sz); };              \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_pop_back(a) do {                                              \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((a)-&gt;icd.dtor) { (a)-&gt;icd.dtor( _utarray_eltptr(a,--((a)-&gt;i))); }       \
+</span></span></span><span class=line><span class=cl><span class=cp>  else { (a)-&gt;i--; }                                                          \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_extend_back(a) do {                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  utarray_reserve(a,1);                                                       \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((a)-&gt;icd.init) { (a)-&gt;icd.init(_utarray_eltptr(a,(a)-&gt;i)); }            \
+</span></span></span><span class=line><span class=cl><span class=cp>  else { memset(_utarray_eltptr(a,(a)-&gt;i),0,(a)-&gt;icd.sz); }                   \
+</span></span></span><span class=line><span class=cl><span class=cp>  (a)-&gt;i++;                                                                   \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_len(a) ((a)-&gt;i)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_eltptr(a,j) (((j) &lt; (a)-&gt;i) ? _utarray_eltptr(a,j) : NULL)
+</span></span></span><span class=line><span class=cl><span class=cp>#define _utarray_eltptr(a,j) ((char*)((a)-&gt;d + ((a)-&gt;icd.sz*(j) )))
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_insert(a,p,j) do {                                            \
+</span></span></span><span class=line><span class=cl><span class=cp>  if (j &gt; (a)-&gt;i) utarray_resize(a,j);                                        \
+</span></span></span><span class=line><span class=cl><span class=cp>  utarray_reserve(a,1);                                                       \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((j) &lt; (a)-&gt;i) {                                                         \
+</span></span></span><span class=line><span class=cl><span class=cp>    memmove( _utarray_eltptr(a,(j)+1), _utarray_eltptr(a,j),                  \
+</span></span></span><span class=line><span class=cl><span class=cp>             ((a)-&gt;i - (j))*((a)-&gt;icd.sz));                                   \
+</span></span></span><span class=line><span class=cl><span class=cp>  }                                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((a)-&gt;icd.copy) { (a)-&gt;icd.copy( _utarray_eltptr(a,j), p); }             \
+</span></span></span><span class=line><span class=cl><span class=cp>  else { memcpy(_utarray_eltptr(a,j), p, (a)-&gt;icd.sz); };                     \
+</span></span></span><span class=line><span class=cl><span class=cp>  (a)-&gt;i++;                                                                   \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_inserta(a,w,j) do {                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  if (utarray_len(w) == 0) break;                                             \
+</span></span></span><span class=line><span class=cl><span class=cp>  if (j &gt; (a)-&gt;i) utarray_resize(a,j);                                        \
+</span></span></span><span class=line><span class=cl><span class=cp>  utarray_reserve(a,utarray_len(w));                                          \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((j) &lt; (a)-&gt;i) {                                                         \
+</span></span></span><span class=line><span class=cl><span class=cp>    memmove(_utarray_eltptr(a,(j)+utarray_len(w)),                            \
+</span></span></span><span class=line><span class=cl><span class=cp>            _utarray_eltptr(a,j),                                             \
+</span></span></span><span class=line><span class=cl><span class=cp>            ((a)-&gt;i - (j))*((a)-&gt;icd.sz));                                    \
+</span></span></span><span class=line><span class=cl><span class=cp>  }                                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((a)-&gt;icd.copy) {                                                        \
+</span></span></span><span class=line><span class=cl><span class=cp>    size_t _ut_i;                                                             \
+</span></span></span><span class=line><span class=cl><span class=cp>    for(_ut_i=0;_ut_i&lt;(w)-&gt;i;_ut_i++) {                                       \
+</span></span></span><span class=line><span class=cl><span class=cp>      (a)-&gt;icd.copy(_utarray_eltptr(a,j+_ut_i), _utarray_eltptr(w,_ut_i));    \
+</span></span></span><span class=line><span class=cl><span class=cp>    }                                                                         \
+</span></span></span><span class=line><span class=cl><span class=cp>  } else {                                                                    \
+</span></span></span><span class=line><span class=cl><span class=cp>    memcpy(_utarray_eltptr(a,j), _utarray_eltptr(w,0),                        \
+</span></span></span><span class=line><span class=cl><span class=cp>           utarray_len(w)*((a)-&gt;icd.sz));                                     \
+</span></span></span><span class=line><span class=cl><span class=cp>  }                                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  (a)-&gt;i += utarray_len(w);                                                   \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_resize(dst,num) do {                                          \
+</span></span></span><span class=line><span class=cl><span class=cp>  size_t _ut_i;                                                               \
+</span></span></span><span class=line><span class=cl><span class=cp>  if (dst-&gt;i &gt; (size_t)(num)) {                                               \
+</span></span></span><span class=line><span class=cl><span class=cp>    if ((dst)-&gt;icd.dtor) {                                                    \
+</span></span></span><span class=line><span class=cl><span class=cp>      for(_ut_i=num; _ut_i &lt; dst-&gt;i; _ut_i++) {                               \
+</span></span></span><span class=line><span class=cl><span class=cp>        (dst)-&gt;icd.dtor(utarray_eltptr(dst,_ut_i));                           \
+</span></span></span><span class=line><span class=cl><span class=cp>      }                                                                       \
+</span></span></span><span class=line><span class=cl><span class=cp>    }                                                                         \
+</span></span></span><span class=line><span class=cl><span class=cp>  } else if (dst-&gt;i &lt; (size_t)(num)) {                                        \
+</span></span></span><span class=line><span class=cl><span class=cp>    utarray_reserve(dst,num-dst-&gt;i);                                          \
+</span></span></span><span class=line><span class=cl><span class=cp>    if ((dst)-&gt;icd.init) {                                                    \
+</span></span></span><span class=line><span class=cl><span class=cp>      for(_ut_i=dst-&gt;i; _ut_i &lt; num; _ut_i++) {                               \
+</span></span></span><span class=line><span class=cl><span class=cp>        (dst)-&gt;icd.init(utarray_eltptr(dst,_ut_i));                           \
+</span></span></span><span class=line><span class=cl><span class=cp>      }                                                                       \
+</span></span></span><span class=line><span class=cl><span class=cp>    } else {                                                                  \
+</span></span></span><span class=line><span class=cl><span class=cp>      memset(_utarray_eltptr(dst,dst-&gt;i),0,(dst)-&gt;icd.sz*(num-dst-&gt;i));       \
+</span></span></span><span class=line><span class=cl><span class=cp>    }                                                                         \
+</span></span></span><span class=line><span class=cl><span class=cp>  }                                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  dst-&gt;i = num;                                                               \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_concat(dst,src) do {                                          \
+</span></span></span><span class=line><span class=cl><span class=cp>  utarray_inserta((dst),(src),utarray_len(dst));                              \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_erase(a,pos,len) do {                                         \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((a)-&gt;icd.dtor) {                                                        \
+</span></span></span><span class=line><span class=cl><span class=cp>    size_t _ut_i;                                                             \
+</span></span></span><span class=line><span class=cl><span class=cp>    for(_ut_i=0; _ut_i &lt; len; _ut_i++) {                                      \
+</span></span></span><span class=line><span class=cl><span class=cp>      (a)-&gt;icd.dtor(utarray_eltptr((a),pos+_ut_i));                           \
+</span></span></span><span class=line><span class=cl><span class=cp>    }                                                                         \
+</span></span></span><span class=line><span class=cl><span class=cp>  }                                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((a)-&gt;i &gt; (pos+len)) {                                                   \
+</span></span></span><span class=line><span class=cl><span class=cp>    memmove( _utarray_eltptr((a),pos), _utarray_eltptr((a),pos+len),          \
+</span></span></span><span class=line><span class=cl><span class=cp>            (((a)-&gt;i)-(pos+len))*((a)-&gt;icd.sz));                              \
+</span></span></span><span class=line><span class=cl><span class=cp>  }                                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>  (a)-&gt;i -= (len);                                                            \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_renew(a,u) do {                                               \
+</span></span></span><span class=line><span class=cl><span class=cp>  if (a) utarray_clear(a); \
+</span></span></span><span class=line><span class=cl><span class=cp>  else utarray_new((a),(u));   \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0) 
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_clear(a) do {                                                 \
+</span></span></span><span class=line><span class=cl><span class=cp>  if ((a)-&gt;i &gt; 0) {                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>    if ((a)-&gt;icd.dtor) {                                                      \
+</span></span></span><span class=line><span class=cl><span class=cp>      size_t _ut_i;                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>      for(_ut_i=0; _ut_i &lt; (a)-&gt;i; _ut_i++) {                                 \
+</span></span></span><span class=line><span class=cl><span class=cp>        (a)-&gt;icd.dtor(utarray_eltptr(a,_ut_i));                               \
+</span></span></span><span class=line><span class=cl><span class=cp>      }                                                                       \
+</span></span></span><span class=line><span class=cl><span class=cp>    }                                                                         \
+</span></span></span><span class=line><span class=cl><span class=cp>    (a)-&gt;i = 0;                                                               \
+</span></span></span><span class=line><span class=cl><span class=cp>  }                                                                           \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_sort(a,cmp) do {                                              \
+</span></span></span><span class=line><span class=cl><span class=cp>  qsort((a)-&gt;d, (a)-&gt;i, (a)-&gt;icd.sz, cmp);                                    \
+</span></span></span><span class=line><span class=cl><span class=cp>} while(0)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_find(a,v,cmp) bsearch((v),(a)-&gt;d,(a)-&gt;i,(a)-&gt;icd.sz,cmp)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define utarray_front(a) (((a)-&gt;i) ? (_utarray_eltptr(a,0)) : NULL)
+</span></span></span><span class=line><span class=cl><span class=cp>#define utarray_next(a,e) (((e)==NULL) ? utarray_front(a) : ((((a)-&gt;i) &gt; (utarray_eltidx(a,e)+1)) ? _utarray_eltptr(a,utarray_eltidx(a,e)+1) : NULL))
+</span></span></span><span class=line><span class=cl><span class=cp>#define utarray_prev(a,e) (((e)==NULL) ? utarray_back(a) : ((utarray_eltidx(a,e) &gt; 0) ? _utarray_eltptr(a,utarray_eltidx(a,e)-1) : NULL))
+</span></span></span><span class=line><span class=cl><span class=cp>#define utarray_back(a) (((a)-&gt;i) ? (_utarray_eltptr(a,(a)-&gt;i-1)) : NULL)
+</span></span></span><span class=line><span class=cl><span class=cp>#define utarray_eltidx(a,e) (((char*)(e) &gt;= (char*)((a)-&gt;d)) ? (((char*)(e) - (char*)((a)-&gt;d))/(size_t)(a)-&gt;icd.sz) : -1)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cm>/* last we pre-define a few icd for common utarrays of ints and strings */</span>
+</span></span><span class=line><span class=cl><span class=k>static</span> <span class=kt>void</span> <span class=nf>utarray_str_cpy</span><span class=p>(</span><span class=kt>void</span> <span class=o>*</span><span class=n>dst</span><span class=p>,</span> <span class=k>const</span> <span class=kt>void</span> <span class=o>*</span><span class=n>src</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=kt>char</span> <span class=o>**</span><span class=n>_src</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span><span class=o>**</span><span class=p>)</span><span class=n>src</span><span class=p>,</span> <span class=o>**</span><span class=n>_dst</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span><span class=o>**</span><span class=p>)</span><span class=n>dst</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=o>*</span><span class=n>_dst</span> <span class=o>=</span> <span class=p>(</span><span class=o>*</span><span class=n>_src</span> <span class=o>==</span> <span class=nb>NULL</span><span class=p>)</span> <span class=o>?</span> <span class=nb>NULL</span> <span class=o>:</span> <span class=nf>strdup</span><span class=p>(</span><span class=o>*</span><span class=n>_src</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=k>static</span> <span class=kt>void</span> <span class=nf>utarray_str_dtor</span><span class=p>(</span><span class=kt>void</span> <span class=o>*</span><span class=n>elt</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=kt>char</span> <span class=o>**</span><span class=n>eltc</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span><span class=o>**</span><span class=p>)</span><span class=n>elt</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=p>(</span><span class=o>*</span><span class=n>eltc</span><span class=p>)</span> <span class=nf>free</span><span class=p>(</span><span class=o>*</span><span class=n>eltc</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=k>static</span> <span class=k>const</span> <span class=n>UT_icd</span> <span class=n>ut_str_icd</span> <span class=n>_UNUSED_</span> <span class=o>=</span> <span class=p>{</span><span class=k>sizeof</span><span class=p>(</span><span class=kt>char</span><span class=o>*</span><span class=p>),</span><span class=nb>NULL</span><span class=p>,</span><span class=n>utarray_str_cpy</span><span class=p>,</span><span class=n>utarray_str_dtor</span><span class=p>};</span>
+</span></span><span class=line><span class=cl><span class=k>static</span> <span class=k>const</span> <span class=n>UT_icd</span> <span class=n>ut_int_icd</span> <span class=n>_UNUSED_</span> <span class=o>=</span> <span class=p>{</span><span class=k>sizeof</span><span class=p>(</span><span class=kt>int</span><span class=p>),</span><span class=nb>NULL</span><span class=p>,</span><span class=nb>NULL</span><span class=p>,</span><span class=nb>NULL</span><span class=p>};</span>
+</span></span><span class=line><span class=cl><span class=k>static</span> <span class=k>const</span> <span class=n>UT_icd</span> <span class=n>ut_ptr_icd</span> <span class=n>_UNUSED_</span> <span class=o>=</span> <span class=p>{</span><span class=k>sizeof</span><span class=p>(</span><span class=kt>void</span><span class=o>*</span><span class=p>),</span><span class=nb>NULL</span><span class=p>,</span><span class=nb>NULL</span><span class=p>,</span><span class=nb>NULL</span><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cp>#endif </span><span class=cm>/* UTARRAY_H */</span><span class=cp>
+</span></span></span></code></pre></div><p>源码来源：https://github.com/troydhanson/network/tree/master/tcp/server</p></div></div><footer class=post__footer><div class=post__tags data-reveal><a class=tag href=/icorer_blog/en/tags/clang/>CLang</a><a class=tag href=/icorer_blog/en/tags/epoll/>Epoll</a><a class=tag href=/icorer_blog/en/tags/%E5%BA%95%E5%B1%82%E7%A0%94%E7%A9%B6/>底层研究</a></div><nav class=pager aria-label="Adjacent essays" data-reveal><a class="pager__item pager__item--prev" href=/icorer_blog/en/posts/manjaro-installs-lnmp-environment/><span class=pager__label>Previous</span>
+<span class=pager__title>Manjaro 安装 LNMP环境</span>
+</a><a class="pager__item pager__item--next" href=/icorer_blog/en/posts/nginx-fast-cgi-cache-optimization/><span class=pager__label>Next</span>
+<span class=pager__title>Nginx FAST-CGI caching, and what it bought</span></a></nav></footer></article><dialog class=lightbox id=lightbox aria-label="Image preview"><div class=lightbox__bar><span class=lightbox__caption data-lightbox-caption></span>
+<button class="icon-btn lightbox__close" type=button data-lightbox-close aria-label="Close preview"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="m4 4 12 12M16 4 4 16"/></svg></button></div><img data-lightbox-img alt></dialog></main><footer class=footer><div class=shell><div class=footer__top><p class=footer__mark>Marginalia</p><a class=footer__top-link href=#top>Back to top <span aria-hidden=true>↑</span></a></div><div class=footer__grid><div class=footer__col><p class=footer__label>About</p><p class=footer__note>A record of systems, people and days.</p></div><div class=footer__col><p class=footer__label>Read</p><a href=/icorer_blog/en/posts/>All writing</a>
+<a href=/icorer_blog/en/tags/>By topic</a>
+<a href=/icorer_blog/en/index.xml>RSS</a></div><div class=footer__col><p class=footer__label>Elsewhere</p><a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a>
+<a href=https://twitter.com/lb_icefirelabs target=_blank rel=noopener>X / Twitter</a>
+<a href=https://cv.icorer.com/ target=_blank rel=noopener>CV</a>
+<a href=mailto:corerman@gmail.com>Email</a></div></div><div class=footer__base><p>© 2026 LB · Marginalia</p></div></div></footer><dialog class=search id=search aria-label="Search writing" data-index=/icorer_blog/en/index.json><form class=search__bar role=search action=/icorer_blog/en/posts/ method=get data-search-form><svg class="search__icon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="8.6" cy="8.6" r="5.9"/><path d="m13 13 4 4"/></svg>
+<label class=visually-hidden for=search-input>Search writing</label>
+<input id=search-input type=search name=q autocomplete=off spellcheck=false placeholder="Title, topic or keyword" data-search-input>
+<button class=search__close type=button data-search-close aria-label="Close search">Esc</button></form><div class=search__body><p class=search__hint data-search-hint data-recent="Recently published">Search 21 essays</p><ul class=search__results data-search-results aria-live=polite data-empty="No essays match that word."></ul><a class=search__all href=/icorer_blog/en/posts/ data-search-all>Browse all writing <span aria-hidden=true>→</span></a></div><p class=search__keys aria-hidden=true>↑ ↓ select · Enter open · Esc close</p></dialog><script src=/icorer_blog/js/main.min.7d432a1167d4c4cda881445fe0f040ce17b40d9eed1c93503cd0a3c6006bcee5.js defer></script></body></html>
