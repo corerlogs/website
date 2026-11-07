@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>RAG on 旁注旁观</title><link>https://icorer.com/icorer_blog/tags/rag/</link><description>Recent content in RAG on 旁注旁观</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Fri, 06 Nov 2026 11:30:00 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/rag/index.xml" rel="self" type="application/rss+xml"/><item><title>数据库的用户换了：Agent 时代的记录系统与上下文层</title><link>https://icorer.com/icorer_blog/posts/ai/agent-native-database/</link><pubDate>Fri, 06 Nov 2026 11:30:00 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/agent-native-database/</guid><description>一句话　数据库的头号用户从人换成了 Agent，于是它裂成两条腿：一条存状态、按需供给，一条供上下文、提前编译。真正变的不只是形态，是&amp;quot;检索&amp;quot;这件事的定义——从召回算法，变成编排框架加编译供给。
-一、问题：报错是写给人看的# 先看一个不起眼的改动。Supabase 把自己全部报错信息翻出来重做了一遍：不再是 500 Internal Server Error，而是在返回文本里直接写明——你为什么触发这个错误、现在该执行哪条命令修、或者去读哪个 URL 的文档。
-这个改动的动机不是体验，是留存。人类程序员看到天书般的报错，会自己去 Google；Agent 看到同样的报错，会放弃并切到竞品。两家公司争的不是一次调用，是&amp;quot;卡住之后它还愿不愿意再试一次&amp;quot;。
-它暴露的是更底层的事：数据库的设计假设全部建立在&amp;quot;用户是人&amp;quot;之上。Dashboard 给人点，API 给人调，报错给人读，实例给人规划。把这些假设逐条拿掉，剩下的才是 Agent 需要的东西。
-三个已经量化的断裂：
-断裂 事实 来源 供给颗粒度 Supabase 周新建数据库 &amp;gt;100 万个，托管库从 800 万涨到近 5000 万（一年） 官网公布（YC 播客） 使用者身份 约 70% 的新增活动来自 Agent；72.1% 的组织已有 Agent 在生产运行 官网公布 / IDC FERS n=903 上下文成本 Agent 约 85% 的计算精力消耗在&amp;quot;重新发现&amp;quot;循环上，而非任务本身 Pinecone 估算 第三条最难缠。前两条是工程问题，第三条是范式问题：如果每次提问都要从零开始探索一遍语料，那么数据规模每涨一个量级，成本和延迟就跟着涨一个量级。
-二、业界已经解决到什么程度# 过去 18 个月，这条线上发生的事可以压缩成五条可核对的主张，每条都带着后果。
-主张 出处 后果 工具结果的交付方式比检索算法更能决定准确率；inline 交付下 grep 在每一个 Harness×模型组合上都胜过向量检索 PwC《Is Grep All You Need?</description></item></channel></rss>
