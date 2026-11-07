@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>决策模型 on 旁注旁观</title><link>https://icorer.com/icorer_blog/tags/%E5%86%B3%E7%AD%96%E6%A8%A1%E5%9E%8B/</link><description>Recent content in 决策模型 on 旁注旁观</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Tue, 03 Nov 2026 12:27:14 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/%E5%86%B3%E7%AD%96%E6%A8%A1%E5%9E%8B/index.xml" rel="self" type="application/rss+xml"/><item><title>思维先于行动：JevAct 给 LLM Agent 加的决策门</title><link>https://icorer.com/icorer_blog/posts/ai/jevact-decision-gate/</link><pubDate>Tue, 03 Nov 2026 12:27:14 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/jevact-decision-gate/</guid><description>Agent 的动作在被执行之前，应该有一道能查、能算、能打回的门。JevAct 的做法是把这道门拆成两半。代码算工具记录能确定的事实，决策模型只回答“对话里到底说了什么”，再用一条布尔规则把两者合起来。它在 τ²-Telecom 上让八个 agent 全部变好，也清楚地暴露了自己的边界。
+中文配音版，2 分 41 秒。中文与英文两版内容一致。
+原文是《Think Before You Act》（IBM SIL，副标题 Decision Gate for LLM Agents），arXiv 编号 2610.38620，全文 18 页，点开就能读 arXiv 页面 ，也可以直接看 PDF 。这篇是我读完全文之后写的，下面的数字、阈值和局限都能在原文里逐条对回去。
+一、提案即执行# ReAct 之类的 agent 循环有一个默认动作，模型说什么，harness 就执行什么。这在“回答错了还能下一轮改”的场景里问题不大，但有三类动作是不可逆的（§1）。
+不可逆的动作 出错的代价 写调用（预订、取消、改设置） 改了数据库状态，有的改不回来 交班（转人工、告诉用户“没办法了”） agent 的尝试结束，用户被推给下一个人 不该发生的写（用户没要求） 越权，比答错更严重 现有方法各自解决一部分（§2），ReAct 交错推理与动作；Self-Refine、Reflexion 在事后批评、下一轮改；GuardAgent、AgentSpec、ShieldAgent、CUGA、ToolSafe、PolicyGuard、ToolFence 这一类做运行期策略约束（§2.2）；LLM-as-a-judge 让另一个大模型来评审（§2.3）。但“在这一条动作执行前，用一条可执行的规则判断它对不对”仍然是缺口，生成式的评审会给出解释，解释还要再被解析成“放行/拦截”；而用前沿模型逐条评审，成本又高。
+论文的立场很明确，把这道门做成概率阈值化 + 可执行检查，而不是再找一个更大的模型来“讲道理”。
+二、两种证据，各管一半# 轻点放大 图 1 agent 仍然负责提议，门只负责决定“执行还是打回”。
+JevAct 是一条跑在 ReAct 循环外面的 harness。它不选动作，只做验证。关键在于把“这个动作对不对”拆成两类问题。
+工具记录能确定的事实。预订创建于几小时前、免费托运额度是多少、这单是不是已经飞过一段、金额有没有超。这些交给代码算，因为算术与日期比较是决策模型最不擅长的。 只能从对话读出的事。用户到底要求了什么、有没有明确确认、某个排障步骤是不是试过。这些交给决策模型用是非题回答。 两条证据最后由一条布尔规则合成结论。这一步是论文真正的设计主张，确定性的部分不要交给概率模型，概率的部分不要硬塞进代码。
+三、四个组件# 3.1 决策环的四个阶段# 每一步四阶段。</description></item></channel></rss>
