@@ -1,0 +1,127 @@
+1
+00:00:00,450 --> 00:00:03,860
+Same subgraph, same question, same model.
+
+2
+00:00:03,860 --> 00:00:06,022
+Write it down another way,
+
+3
+00:00:06,022 --> 00:00:09,266
+and accuracy drops from 41.8% to 13.6%.
+
+4
+00:00:09,266 --> 00:00:13,674
+That 28-point gap has nothing to do with your prompt.
+
+5
+00:00:14,674 --> 00:00:18,946
+Four authors at Oracle laid out fifteen serialization formats,
+
+6
+00:00:18,946 --> 00:00:22,392
+from semantic web triples down to adjacency lists,
+
+7
+00:00:22,392 --> 00:00:26,664
+across nine frontier model configurations and four benchmarks.
+
+8
+00:00:26,664 --> 00:00:30,730
+The control is clean. Only the serialization block changes.
+
+9
+00:00:31,730 --> 00:00:34,460
+Ontology extraction barely notices.
+
+10
+00:00:34,460 --> 00:00:38,360
+All nine configurations land between 45 and 55 F1,
+
+11
+00:00:38,360 --> 00:00:42,182
+and the cross-format spread is 1.3 to 3.9 points.
+
+12
+00:00:42,182 --> 00:00:44,834
+That is not where the money hides.
+
+13
+00:00:45,834 --> 00:00:48,831
+Structural reasoning is where the same choice
+
+14
+00:00:48,831 --> 00:00:50,229
+is worth 28.4 points.
+
+15
+00:00:50,229 --> 00:00:53,493
+Bigger graphs and harder operators widen the gap,
+
+16
+00:00:53,493 --> 00:00:55,890
+and real subgraphs widen it further.
+
+17
+00:00:56,890 --> 00:01:01,473
+One model family, three reasoning tiers, three favourite formats.
+
+18
+00:01:01,473 --> 00:01:04,788
+The most accurate tier uses 1,008 input tokens,
+
+19
+00:01:04,788 --> 00:01:08,454
+four and a half times cheaper than the default tier.
+
+20
+00:01:08,454 --> 00:01:11,698
+The expensive model stops caring about format.
+
+21
+00:01:12,698 --> 00:01:14,383
+Real graphs are worse.
+
+22
+00:01:14,383 --> 00:01:18,213
+Strip the predicates and adjacency falls to 13.6%,
+
+23
+00:01:18,213 --> 00:01:21,659
+while the most explicit format reaches 41.8%.
+
+24
+00:01:21,659 --> 00:01:25,106
+The answer sits in the part you stripped out.
+
+25
+00:01:26,106 --> 00:01:30,625
+A per-question selector lifts 66.67% to 76.19%,
+
+26
+00:01:30,625 --> 00:01:32,932
+for 3.71 times the cost.
+
+27
+00:01:32,932 --> 00:01:38,028
+Majority voting spends 5.69 times and reaches 71.43%.
+
+28
+00:01:38,028 --> 00:01:41,778
+And this holds inside one distribution.
+
+29
+00:01:42,778 --> 00:01:45,074
+So go back to your own pipeline.
+
+30
+00:01:45,074 --> 00:01:48,947
+Fix twenty questions and pick three to five spellings,
+
+31
+00:01:48,947 --> 00:01:51,028
+then measure the spread once.
+
+32
+00:01:51,028 --> 00:01:55,762
+Narrower than 3 points, pick one. Wider than 10, price a selector.
