@@ -1,0 +1,397 @@
+<!doctype html><html lang=en-us data-theme=light id=top><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Manjaro 安装 LNMP环境 · Marginalia</title>
+<meta name=description content="安装PHP、PHP-FPM ; 编译安装 Nginx、MYSQL; 详细配置信息。# 1. 编译Nginx# 1.1 创建用户 及 用户组# sudo groupadd -r www sudo useradd -s /sbin/nologin -g www -r www 1.2 下载Nginx源码包 并 解压# wget …"><meta name=author content="LB"><meta name=color-scheme content="light dark"><meta name=theme-color content="#f4f4f1"><meta property="og:site_name" content="Marginalia"><meta property="og:title" content="Manjaro 安装 LNMP环境 · Marginalia"><meta property="og:description" content="安装PHP、PHP-FPM ; 编译安装 Nginx、MYSQL; 详细配置信息。# 1. 编译Nginx# 1.1 创建用户 及 用户组# sudo groupadd -r www sudo useradd -s /sbin/nologin -g www -r www 1.2 下载Nginx源码包 并 解压# wget …"><meta property="og:url" content="https://icorer.com/icorer_blog/en/posts/manjaro-installs-lnmp-environment/"><meta property="og:type" content="article"><meta property="og:locale" content="en_us"><meta property="og:image" content="https://icorer.com/icorer_blog/img/share-default.png"><meta property="og:image:url" content="https://icorer.com/icorer_blog/img/share-default.png"><meta property="og:image:alt" content="Manjaro 安装 LNMP环境 · Marginalia"><meta itemprop=image content="https://icorer.com/icorer_blog/img/share-default.png"><meta name=twitter:image content="https://icorer.com/icorer_blog/img/share-default.png"><link rel=image_src href=https://icorer.com/icorer_blog/img/share-default.png><meta property="article:published_time" content="2018-03-24T13:03:18+08:00"><meta property="article:modified_time" content="2018-03-24T13:03:18+08:00"><meta property="article:tag" content="linux"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="Manjaro 安装 LNMP环境 · Marginalia"><meta name=twitter:description content="安装PHP、PHP-FPM ; 编译安装 Nginx、MYSQL; 详细配置信息。# 1. 编译Nginx# 1.1 创建用户 及 用户组# sudo groupadd -r www sudo useradd -s /sbin/nologin -g www -r www 1.2 下载Nginx源码包 并 解压# wget …"><meta name=twitter:site content="@lb_icefirelabs"><link rel=icon type=image/svg+xml href=/icorer_blog/favicon.svg><link rel=icon href=/icorer_blog/img/favicon.ico sizes=any><link rel=apple-touch-icon href=/icorer_blog/apple-touch-icon.png><script>(function(){try{var t=localStorage.getItem("trace-theme"),e=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.dataset.theme=t||(e?"dark":"light")}catch{}})()</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/icorer_blog/css/main.min.0bfa25a72fd8cf73f6edc8abd3b15df7005fcdcfca2bb71ba3a314b1235f8f10.css integrity="sha256-C/olpy/Yz3P27cir07Fd9wBfzc/KK7cbo6MUsSNfjxA="><script>document.documentElement.classList.add("js")</script></head><body><a class=skip href=#main>Skip to content</a><header class=nav><div class="nav__inner shell"><a class=nav__brand href=/icorer_blog/en/ aria-label=Marginalia><span class=nav__brand-main>Marginalia</span>
+<span class=nav__brand-sub>旁注旁观</span></a><nav class=nav__links aria-label=Primary><a href=/icorer_blog/en/posts/>Writing</a>
+<a href=/icorer_blog/en/tags/>Topics</a>
+<a href=https://www.icorer.com/ target=_blank rel=noopener>About</a>
+<a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a></nav><div class=nav__tools><button class=icon-btn type=button data-search-open aria-label="Search writing">
+<svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="8.6" cy="8.6" r="5.9"/><path d="m13 13 4 4"/></svg>
+</button>
+<a class=lang-switch href=/icorer_blog/ hreflang=zh aria-label=阅读中文>中文</a>
+<button class="icon-btn theme-btn" type=button data-theme-toggle aria-label="Switch theme">
+<svg class="theme-btn__sun" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="10" cy="10" r="3.4"/><path d="M10 1.8v2.1m0 12.2v2.1M1.8 10h2.1m12.2.0h2.1M4.2 4.2l1.5 1.5m8.6 8.6 1.5 1.5m0-11.6-1.5 1.5M5.7 14.3l-1.5 1.5"/></svg>
+<svg class="theme-btn__moon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="M16.2 12.4A6.8 6.8.0 017.6 3.8a6.8 6.8.0 108.6 8.6z"/></svg>
+</button>
+<button class=nav__menu-btn type=button data-menu-open aria-label="Open menu" aria-haspopup=dialog>
+<span>Menu</span><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="M2 6h16M2 14h16"/></svg></button></div></div></header><dialog class=menu id=menu aria-label=Menu><div class=menu__head><p class=menu__mark>Marginalia</p><button class=icon-btn type=button data-menu-close aria-label="Close menu"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="m4 4 12 12M16 4 4 16"/></svg></button></div><nav class=menu__links aria-label="Mobile navigation"><a href=/icorer_blog/en/posts/>Writing</a>
+<a href=/icorer_blog/en/tags/>Topics</a>
+<a href=https://www.icorer.com/ target=_blank rel=noopener>About</a>
+<a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a></nav><div class=menu__foot><button class=text-btn type=button data-search-open>Search all writing</button>
+<a class=lang-switch href=/icorer_blog/ hreflang=zh aria-label=阅读中文>中文</a></div></dialog><main id=main><article class=post data-poster><header class=post__header><h1 class=post__title data-reveal>Manjaro 安装 LNMP环境</h1><p class="meta post__meta" data-reveal style=--d:120ms><time datetime=2018-03-24>Mar 24, 2018</time>
+<span>6 min</span>
+<span>LB</span></p></header><div class=post__grid><aside class=post__aside data-reveal><details class=toc-mobile><summary>Contents</summary><nav id=TableOfContentsMobile><ul><li><a href=#安装phpphp-fpm--编译安装-nginxmysql-详细配置信息>安装PHP、PHP-FPM ; 编译安装 Nginx、MYSQL; 详细配置信息。</a></li><li><a href=#1-编译nginx>1. 编译Nginx</a><ul><li><a href=#11-创建用户-及-用户组>1.1 创建用户 及 用户组</a></li><li><a href=#12-下载nginx源码包-并-解压>1.2 下载Nginx源码包 并 解压</a></li><li><a href=#13-配置编译参数>1.3 配置编译参数</a></li><li><a href=#14-编译及安装root权限>1.4 编译及安装(root权限)</a></li><li><a href=#15-配置nginx-配置文件>1.5 配置Nginx 配置文件</a></li></ul></li><li><a href=#2-安装-mysql-系列数据库>2. 安装 MYSQL 系列数据库</a><ul><li><a href=#21-创建用户-及-用户组>2.1 创建用户 及 用户组</a></li><li><a href=#22-下载boost库-并-解压到-usrlocallib>2.2 下载boost库 并 解压到 /usr/local/lib</a></li><li><a href=#23-安装-rpcgen-附属库>2.3 安装 rpcgen 附属库</a></li><li><a href=#24-cmake生成编译文件系统>2.4 CMAKE生成编译文件系统</a></li><li><a href=#25-创建mysql-data目录>2.5 创建MYSQL DATA目录</a></li><li><a href=#26-配置mycnf--etcmycnf>2.6 配置my.cnf (/etc/my.cnf)</a></li><li><a href=#27-配置mycnf-2-etcmycnf>2.7 配置my.cnf 2 (/etc/my.cnf)</a></li><li><a href=#28-初始化数据库存储>2.8 初始化数据库存储</a></li><li><a href=#29-链接mysql开发库>2.9 链接mysql开发库</a></li></ul></li><li><a href=#30-链接shell命令系统>3.0 链接Shell命令系统</a><ul><li><a href=#31-修改mysql密码>3.1 修改mysql密码</a></li><li><a href=#33-启动服务>3.3 启动服务</a></li><li><a href=#32-mysql高级配置>3.2 MYSQL高级配置</a></li></ul></li><li><a href=#3-安装php模块>3. 安装PHP模块</a><ul><li><a href=#31-安装php-7>3.1 安装PHP 7</a></li><li><a href=#32-配置phpini文件>3.2 配置php.ini文件</a></li><li><a href=#33-安装php-fpm>3.3 安装PHP-FPM</a></li><li><a href=#34-配置php-fpm-配置文件>3.4 配置PHP-FPM 配置文件</a></li><li><a href=#35-以root权限执行php-fpm命令>3.5 以root权限执行PHP-FPM命令</a></li></ul></li></ul></nav></details><nav class="toc toc--desktop" aria-label=Contents><p class=toc__title>Contents</p><nav id=TableOfContents><ul><li><a href=#安装phpphp-fpm--编译安装-nginxmysql-详细配置信息>安装PHP、PHP-FPM ; 编译安装 Nginx、MYSQL; 详细配置信息。</a></li><li><a href=#1-编译nginx>1. 编译Nginx</a><ul><li><a href=#11-创建用户-及-用户组>1.1 创建用户 及 用户组</a></li><li><a href=#12-下载nginx源码包-并-解压>1.2 下载Nginx源码包 并 解压</a></li><li><a href=#13-配置编译参数>1.3 配置编译参数</a></li><li><a href=#14-编译及安装root权限>1.4 编译及安装(root权限)</a></li><li><a href=#15-配置nginx-配置文件>1.5 配置Nginx 配置文件</a></li></ul></li><li><a href=#2-安装-mysql-系列数据库>2. 安装 MYSQL 系列数据库</a><ul><li><a href=#21-创建用户-及-用户组>2.1 创建用户 及 用户组</a></li><li><a href=#22-下载boost库-并-解压到-usrlocallib>2.2 下载boost库 并 解压到 /usr/local/lib</a></li><li><a href=#23-安装-rpcgen-附属库>2.3 安装 rpcgen 附属库</a></li><li><a href=#24-cmake生成编译文件系统>2.4 CMAKE生成编译文件系统</a></li><li><a href=#25-创建mysql-data目录>2.5 创建MYSQL DATA目录</a></li><li><a href=#26-配置mycnf--etcmycnf>2.6 配置my.cnf (/etc/my.cnf)</a></li><li><a href=#27-配置mycnf-2-etcmycnf>2.7 配置my.cnf 2 (/etc/my.cnf)</a></li><li><a href=#28-初始化数据库存储>2.8 初始化数据库存储</a></li><li><a href=#29-链接mysql开发库>2.9 链接mysql开发库</a></li></ul></li><li><a href=#30-链接shell命令系统>3.0 链接Shell命令系统</a><ul><li><a href=#31-修改mysql密码>3.1 修改mysql密码</a></li><li><a href=#33-启动服务>3.3 启动服务</a></li><li><a href=#32-mysql高级配置>3.2 MYSQL高级配置</a></li></ul></li><li><a href=#3-安装php模块>3. 安装PHP模块</a><ul><li><a href=#31-安装php-7>3.1 安装PHP 7</a></li><li><a href=#32-配置phpini文件>3.2 配置php.ini文件</a></li><li><a href=#33-安装php-fpm>3.3 安装PHP-FPM</a></li><li><a href=#34-配置php-fpm-配置文件>3.4 配置PHP-FPM 配置文件</a></li><li><a href=#35-以root权限执行php-fpm命令>3.5 以root权限执行PHP-FPM命令</a></li></ul></li></ul></nav></nav></aside><div class=post__prose data-prose><h2 id=安装phpphp-fpm--编译安装-nginxmysql-详细配置信息>安装PHP、PHP-FPM ; 编译安装 Nginx、MYSQL; 详细配置信息。<a class=anchor href=#%e5%ae%89%e8%a3%85phpphp-fpm--%e7%bc%96%e8%af%91%e5%ae%89%e8%a3%85-nginxmysql-%e8%af%a6%e7%bb%86%e9%85%8d%e7%bd%ae%e4%bf%a1%e6%81%af aria-label="Link to this section">#</a></h2><h2 id=1-编译nginx>1. 编译Nginx<a class=anchor href=#1-%e7%bc%96%e8%af%91nginx aria-label="Link to this section">#</a></h2><h3 id=11-创建用户-及-用户组>1.1 创建用户 及 用户组<a class=anchor href=#11-%e5%88%9b%e5%bb%ba%e7%94%a8%e6%88%b7-%e5%8f%8a-%e7%94%a8%e6%88%b7%e7%bb%84 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>sudo groupadd -r www
+</span></span><span class=line><span class=cl>sudo useradd -s /sbin/nologin -g www -r www
+</span></span></code></pre></div><h3 id=12-下载nginx源码包-并-解压>1.2 下载Nginx源码包 并 解压<a class=anchor href=#12-%e4%b8%8b%e8%bd%bdnginx%e6%ba%90%e7%a0%81%e5%8c%85-%e5%b9%b6-%e8%a7%a3%e5%8e%8b aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>wget http://nginx.org/download/nginx-1.14.0.tar.gz
+</span></span></code></pre></div><h3 id=13-配置编译参数>1.3 配置编译参数<a class=anchor href=#13-%e9%85%8d%e7%bd%ae%e7%bc%96%e8%af%91%e5%8f%82%e6%95%b0 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>./configure --user<span class=o>=</span>www --group<span class=o>=</span>www --prefix<span class=o>=</span>/usr/local/nginx <span class=se>\ </span>
+</span></span><span class=line><span class=cl>	   		   --with-http_stub_status_module --with-http_ssl_module <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>	   		    --with-http_v2_module --with-http_gzip_static_module <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>	   		   --with-http_sub_module --with-openssl<span class=o>=</span>/home/corerman/temp/nginx-1.13.12/src/openssl-1.0.2o/
+</span></span></code></pre></div><h3 id=14-编译及安装root权限>1.4 编译及安装(root权限)<a class=anchor href=#14-%e7%bc%96%e8%af%91%e5%8f%8a%e5%ae%89%e8%a3%85root%e6%9d%83%e9%99%90 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>sudo make <span class=o>&amp;&amp;</span> make install
+</span></span></code></pre></div><h3 id=15-配置nginx-配置文件>1.5 配置Nginx 配置文件<a class=anchor href=#15-%e9%85%8d%e7%bd%aenginx-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6 aria-label="Link to this section">#</a></h3><h4 id=151-配置enable-phpconf>1.5.1 配置enable-php.conf<a class=anchor href=#151-%e9%85%8d%e7%bd%aeenable-phpconf aria-label="Link to this section">#</a></h4><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>        location ~ <span class=o>[</span>^/<span class=o>]</span><span class=se>\.</span>php<span class=o>(</span>/<span class=p>|</span>$<span class=o>)</span>
+</span></span><span class=line><span class=cl>        <span class=o>{</span>
+</span></span><span class=line><span class=cl>            try_files <span class=nv>$uri</span> <span class=o>=</span>404<span class=p>;</span>
+</span></span><span class=line><span class=cl>            fastcgi_pass  unix:/tmp/php-cgi.sock<span class=p>;</span>
+</span></span><span class=line><span class=cl>            fastcgi_index index.php<span class=p>;</span>
+</span></span><span class=line><span class=cl>            include fastcgi.conf<span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=o>}</span>
+</span></span></code></pre></div><h4 id=152-配置nginxconf>1.5.2 配置nginx.conf<a class=anchor href=#152-%e9%85%8d%e7%bd%aenginxconf aria-label="Link to this section">#</a></h4><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>user  www www<span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>worker_processes auto<span class=p>;</span>
+</span></span><span class=line><span class=cl>error_log  /home/wwwlogs/nginx_error.log  crit<span class=p>;</span>
+</span></span><span class=line><span class=cl>pid        /usr/local/nginx/logs/nginx.pid<span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>worker_rlimit_nofile 51200<span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>events
+</span></span><span class=line><span class=cl>     <span class=o>{</span>
+</span></span><span class=line><span class=cl>	      use epoll<span class=p>;</span>
+</span></span><span class=line><span class=cl>          worker_connections 51200<span class=p>;</span>
+</span></span><span class=line><span class=cl>          multi_accept on<span class=p>;</span>
+</span></span><span class=line><span class=cl>	  <span class=o>}</span>
+</span></span><span class=line><span class=cl>http
+</span></span><span class=line><span class=cl>     <span class=o>{</span>
+</span></span><span class=line><span class=cl>         include       mime.types<span class=p>;</span>
+</span></span><span class=line><span class=cl>         default_type  application/octet-stream<span class=p>;</span>
+</span></span><span class=line><span class=cl>         server_names_hash_bucket_size 128<span class=p>;</span>
+</span></span><span class=line><span class=cl>         client_header_buffer_size 32k<span class=p>;</span>
+</span></span><span class=line><span class=cl>         large_client_header_buffers <span class=m>4</span> 32k<span class=p>;</span>
+</span></span><span class=line><span class=cl>         client_max_body_size 50m<span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>         sendfile   on<span class=p>;</span>
+</span></span><span class=line><span class=cl>         tcp_nopush on<span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>         keepalive_timeout 60<span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>         tcp_nodelay on<span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>         fastcgi_connect_timeout 300<span class=p>;</span>
+</span></span><span class=line><span class=cl>         fastcgi_send_timeout 300<span class=p>;</span>
+</span></span><span class=line><span class=cl>         fastcgi_read_timeout 300<span class=p>;</span>
+</span></span><span class=line><span class=cl>         fastcgi_buffer_size 64k<span class=p>;</span>
+</span></span><span class=line><span class=cl>         fastcgi_buffers <span class=m>4</span> 64k<span class=p>;</span>
+</span></span><span class=line><span class=cl>         fastcgi_busy_buffers_size 128k<span class=p>;</span>
+</span></span><span class=line><span class=cl>         fastcgi_temp_file_write_size 256k<span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>         gzip on<span class=p>;</span>
+</span></span><span class=line><span class=cl>         gzip_min_length  1k<span class=p>;</span>
+</span></span><span class=line><span class=cl>         gzip_buffers     <span class=m>4</span> 16k<span class=p>;</span>
+</span></span><span class=line><span class=cl>         gzip_http_version 1.1<span class=p>;</span>
+</span></span><span class=line><span class=cl>         gzip_comp_level 2<span class=p>;</span>
+</span></span><span class=line><span class=cl>         gzip_types     text/plain application/javascript application/x-javascript text/javascript text/css application/xml
+</span></span><span class=line><span class=cl>         application/xml+rss<span class=p>;</span>
+</span></span><span class=line><span class=cl>         gzip_vary on<span class=p>;</span>
+</span></span><span class=line><span class=cl>         gzip_proxied   expired no-cache no-store private auth<span class=p>;</span>
+</span></span><span class=line><span class=cl>         gzip_disable   <span class=s2>&#34;MSIE [1-6]\.&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>         server_tokens off<span class=p>;</span>
+</span></span><span class=line><span class=cl>         access_log off<span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>       server
+</span></span><span class=line><span class=cl>           <span class=o>{</span>
+</span></span><span class=line><span class=cl>              listen <span class=m>80</span> default_server<span class=p>;</span>
+</span></span><span class=line><span class=cl>               <span class=c1>#listen [::]:80 default_server ipv6only=on;</span>
+</span></span><span class=line><span class=cl>               server_name _<span class=p>;</span>
+</span></span><span class=line><span class=cl>               index index.html index.htm index.php<span class=p>;</span>
+</span></span><span class=line><span class=cl>               root  /home/wwwroot/default<span class=p>;</span>
+</span></span><span class=line><span class=cl>               <span class=c1>#error_page   404   /404.html;</span>
+</span></span><span class=line><span class=cl>               include enable-php.conf<span class=p>;</span>
+</span></span><span class=line><span class=cl>               location /nginx_status
+</span></span><span class=line><span class=cl>               <span class=o>{</span>
+</span></span><span class=line><span class=cl>                    stub_status on<span class=p>;</span>
+</span></span><span class=line><span class=cl>                   access_log   off<span class=p>;</span>
+</span></span><span class=line><span class=cl>               <span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>                location ~ .*<span class=se>\.</span><span class=o>(</span>gif<span class=p>|</span>jpg<span class=p>|</span>jpeg<span class=p>|</span>png<span class=p>|</span>bmp<span class=p>|</span>swf<span class=o>)</span>$
+</span></span><span class=line><span class=cl>                <span class=o>{</span>
+</span></span><span class=line><span class=cl>                    expires      30d<span class=p>;</span>
+</span></span><span class=line><span class=cl>                <span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>                location ~ .*<span class=se>\.</span><span class=o>(</span>js<span class=p>|</span>css<span class=o>)</span>?$
+</span></span><span class=line><span class=cl>                <span class=o>{</span>
+</span></span><span class=line><span class=cl>                    expires      12h<span class=p>;</span>
+</span></span><span class=line><span class=cl>                <span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>                location ~ /.well-known <span class=o>{</span>
+</span></span><span class=line><span class=cl>                    allow all<span class=p>;</span>
+</span></span><span class=line><span class=cl>               <span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>                location ~ /<span class=se>\.</span>
+</span></span><span class=line><span class=cl>                <span class=o>{</span>
+</span></span><span class=line><span class=cl>                   deny all<span class=p>;</span>
+</span></span><span class=line><span class=cl>               <span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>               access_log  /home/wwwlogs/access.log<span class=p>;</span>
+</span></span><span class=line><span class=cl>           <span class=o>}</span>
+</span></span><span class=line><span class=cl>            include vhost/*.conf<span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=o>}</span>
+</span></span></code></pre></div><h4 id=15-3-配置vhost-虚拟主机文件-例如listconf>1.5 .3 配置Vhost 虚拟主机文件 例如list.conf<a class=anchor href=#15-3-%e9%85%8d%e7%bd%aevhost-%e8%99%9a%e6%8b%9f%e4%b8%bb%e6%9c%ba%e6%96%87%e4%bb%b6-%e4%be%8b%e5%a6%82listconf aria-label="Link to this section">#</a></h4><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>server <span class=o>{</span>
+</span></span><span class=line><span class=cl>            listen       81<span class=p>;</span>
+</span></span><span class=line><span class=cl>            server_name  debug.njapld.com<span class=p>;</span>
+</span></span><span class=line><span class=cl>            index index.php index.html<span class=p>;</span>
+</span></span><span class=line><span class=cl>            root  /home/corerman/ICODE/PHP/default<span class=p>;</span>
+</span></span><span class=line><span class=cl>            rewrite_log on<span class=p>;</span>
+</span></span><span class=line><span class=cl>             <span class=c1>#   include thinkphp.conf;</span>
+</span></span><span class=line><span class=cl>            include enable-php.conf<span class=p>;</span>
+</span></span><span class=line><span class=cl>            location ~ .*<span class=se>\.</span><span class=o>(</span>gif<span class=p>|</span>jpg<span class=p>|</span>jpeg<span class=p>|</span>png<span class=p>|</span>bmp<span class=p>|</span>swf<span class=o>)</span>$
+</span></span><span class=line><span class=cl>            <span class=o>{</span>
+</span></span><span class=line><span class=cl>                expires      30d<span class=p>;</span>
+</span></span><span class=line><span class=cl>            <span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>           location ~ .*<span class=se>\.</span><span class=o>(</span>js<span class=p>|</span>css<span class=o>)</span>?$
+</span></span><span class=line><span class=cl>            <span class=o>{</span>
+</span></span><span class=line><span class=cl>                expires      12h<span class=p>;</span>
+</span></span><span class=line><span class=cl>            <span class=o>}</span>
+</span></span><span class=line><span class=cl>           location ~ /.well-known <span class=o>{</span>
+</span></span><span class=line><span class=cl>               allow all<span class=p>;</span>
+</span></span><span class=line><span class=cl>            <span class=o>}</span>
+</span></span><span class=line><span class=cl>           location ~ /<span class=se>\.</span>
+</span></span><span class=line><span class=cl>           <span class=o>{</span>
+</span></span><span class=line><span class=cl>               deny all<span class=p>;</span>
+</span></span><span class=line><span class=cl>           <span class=o>}</span>
+</span></span><span class=line><span class=cl>            <span class=c1>#access_log  /home/wwwlogs/access.log; </span>
+</span></span><span class=line><span class=cl> <span class=o>}</span>
+</span></span></code></pre></div><h2 id=2-安装-mysql-系列数据库>2. 安装 MYSQL 系列数据库<a class=anchor href=#2-%e5%ae%89%e8%a3%85-mysql-%e7%b3%bb%e5%88%97%e6%95%b0%e6%8d%ae%e5%ba%93 aria-label="Link to this section">#</a></h2><h3 id=21-创建用户-及-用户组>2.1 创建用户 及 用户组<a class=anchor href=#21-%e5%88%9b%e5%bb%ba%e7%94%a8%e6%88%b7-%e5%8f%8a-%e7%94%a8%e6%88%b7%e7%bb%84 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>groupadd mysql
+</span></span><span class=line><span class=cl>useradd -s /sbin/nologin -M -g mysql mysql
+</span></span></code></pre></div><h3 id=22-下载boost库-并-解压到-usrlocallib>2.2 下载boost库 并 解压到 /usr/local/lib<a class=anchor href=#22-%e4%b8%8b%e8%bd%bdboost%e5%ba%93-%e5%b9%b6-%e8%a7%a3%e5%8e%8b%e5%88%b0-usrlocallib aria-label="Link to this section">#</a></h3><pre><code>https://astuteinternet.dl.sourceforge.net/project/boost/boost/1.59.0/boost_1_59_0.tar.gz
+</code></pre><h3 id=23-安装-rpcgen-附属库>2.3 安装 rpcgen 附属库<a class=anchor href=#23-%e5%ae%89%e8%a3%85-rpcgen-%e9%99%84%e5%b1%9e%e5%ba%93 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>sudo pacman-S rpcsvc-proto
+</span></span></code></pre></div><h3 id=24-cmake生成编译文件系统>2.4 CMAKE生成编译文件系统<a class=anchor href=#24-cmake%e7%94%9f%e6%88%90%e7%bc%96%e8%af%91%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>sudo  cmake -DCMAKE_INSTALL_PREFIX<span class=o>=</span>/usr/local/mysql  <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>			-DSYSCONFDIR<span class=o>=</span>/etc -DWITH_MYISAM_STORAGE_ENGINE<span class=o>=</span><span class=m>1</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>			-DWITH_INNOBASE_STORAGE_ENGINE<span class=o>=</span><span class=m>1</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>			-DWITH_PARTITION_STORAGE_ENGINE<span class=o>=</span><span class=m>1</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>			-DWITH_FEDERATED_STORAGE_ENGINE<span class=o>=</span><span class=m>1</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>			-DEXTRA_CHARSETS<span class=o>=</span>all <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>			-DDEFAULT_CHARSET<span class=o>=</span>utf8mb4 <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>			-DDEFAULT_COLLATION<span class=o>=</span>utf8mb4_general_ci <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>			-DWITH_EMBEDDED_SERVER<span class=o>=</span><span class=m>1</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>			-DENABLED_LOCAL_INFILE<span class=o>=</span><span class=m>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>sudo make <span class=o>&amp;&amp;</span> make install
+</span></span></code></pre></div><h3 id=25-创建mysql-data目录>2.5 创建MYSQL DATA目录<a class=anchor href=#25-%e5%88%9b%e5%bb%bamysql-data%e7%9b%ae%e5%bd%95 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>mkdir <span class=si>${</span><span class=nv>MySQL_Data_Dir</span><span class=si>}</span>
+</span></span><span class=line><span class=cl>chown -R mysql:mysql <span class=si>${</span><span class=nv>MySQL_Data_Dir</span><span class=si>}</span>
+</span></span></code></pre></div><h3 id=26-配置mycnf--etcmycnf>2.6 配置my.cnf (/etc/my.cnf)<a class=anchor href=#26-%e9%85%8d%e7%bd%aemycnf--etcmycnf aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl><span class=o>[</span>client<span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=c1>#password   = your_password</span>
+</span></span><span class=line><span class=cl><span class=nv>port</span>        <span class=o>=</span> <span class=m>3306</span>
+</span></span><span class=line><span class=cl><span class=nv>socket</span>      <span class=o>=</span> /tmp/mysql.sock
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>mysqld<span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=nv>port</span>        <span class=o>=</span> <span class=m>3306</span>
+</span></span><span class=line><span class=cl><span class=nv>socket</span>      <span class=o>=</span> /tmp/mysql.sock
+</span></span><span class=line><span class=cl><span class=nv>datadir</span> <span class=o>=</span> <span class=si>${</span><span class=nv>MySQL_Data_Dir</span><span class=si>}</span>
+</span></span><span class=line><span class=cl>skip-external-locking
+</span></span><span class=line><span class=cl><span class=nv>key_buffer_size</span> <span class=o>=</span> 16M
+</span></span><span class=line><span class=cl><span class=nv>max_allowed_packet</span> <span class=o>=</span> 1M
+</span></span><span class=line><span class=cl><span class=nv>table_open_cache</span> <span class=o>=</span> <span class=m>64</span>
+</span></span><span class=line><span class=cl><span class=nv>sort_buffer_size</span> <span class=o>=</span> 512K
+</span></span><span class=line><span class=cl><span class=nv>net_buffer_length</span> <span class=o>=</span> 8K
+</span></span><span class=line><span class=cl><span class=nv>read_buffer_size</span> <span class=o>=</span> 256K
+</span></span><span class=line><span class=cl><span class=nv>read_rnd_buffer_size</span> <span class=o>=</span> 512K
+</span></span><span class=line><span class=cl><span class=nv>myisam_sort_buffer_size</span> <span class=o>=</span> 8M
+</span></span><span class=line><span class=cl><span class=nv>thread_cache_size</span> <span class=o>=</span> <span class=m>8</span>
+</span></span><span class=line><span class=cl><span class=nv>query_cache_size</span> <span class=o>=</span> 8M
+</span></span><span class=line><span class=cl><span class=nv>tmp_table_size</span> <span class=o>=</span> 16M
+</span></span><span class=line><span class=cl><span class=nv>performance_schema_max_table_instances</span> <span class=o>=</span> <span class=m>500</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>explicit_defaults_for_timestamp</span> <span class=o>=</span> <span class=nb>true</span>
+</span></span><span class=line><span class=cl><span class=c1>#skip-networking</span>
+</span></span><span class=line><span class=cl><span class=nv>max_connections</span> <span class=o>=</span> <span class=m>500</span>
+</span></span><span class=line><span class=cl><span class=nv>max_connect_errors</span> <span class=o>=</span> <span class=m>100</span>
+</span></span><span class=line><span class=cl><span class=nv>open_files_limit</span> <span class=o>=</span> <span class=m>65535</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>log-bin<span class=o>=</span>mysql-bin
+</span></span><span class=line><span class=cl><span class=nv>binlog_format</span><span class=o>=</span>mixed
+</span></span><span class=line><span class=cl>server-id   <span class=o>=</span> <span class=m>1</span>
+</span></span><span class=line><span class=cl><span class=nv>expire_logs_days</span> <span class=o>=</span> <span class=m>10</span>
+</span></span><span class=line><span class=cl>early-plugin-load <span class=o>=</span> <span class=s2>&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-trx=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-locks=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-lock-waits=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-cmp=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-cmp-per-index=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-cmp-per-index-reset=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-cmp-reset=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-cmpmem=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-cmpmem-reset=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-buffer-page=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-buffer-page-lru=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-buffer-pool-stats=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-metrics=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-ft-default-stopword=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-ft-inserted=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-ft-deleted=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-ft-being-deleted=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-ft-config=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-ft-index-cache=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-ft-index-table=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-sys-tables=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-sys-tablestats=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-sys-indexes=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-sys-columns=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-sys-fields=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-sys-foreign=0</span>
+</span></span><span class=line><span class=cl><span class=c1>#loose-innodb-sys-foreign-cols=0</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>default_storage_engine</span> <span class=o>=</span> InnoDB
+</span></span><span class=line><span class=cl><span class=c1>#innodb_file_per_table = 1</span>
+</span></span><span class=line><span class=cl><span class=c1>#innodb_data_home_dir = ${MySQL_Data_Dir}</span>
+</span></span><span class=line><span class=cl><span class=c1>#innodb_data_file_path = ibdata1:10M:autoextend</span>
+</span></span><span class=line><span class=cl><span class=c1>#innodb_log_group_home_dir = ${MySQL_Data_Dir}</span>
+</span></span><span class=line><span class=cl><span class=c1>#innodb_buffer_pool_size = 16M</span>
+</span></span><span class=line><span class=cl><span class=c1>#innodb_log_file_size = 5M</span>
+</span></span><span class=line><span class=cl><span class=c1>#innodb_log_buffer_size = 8M</span>
+</span></span><span class=line><span class=cl><span class=c1>#innodb_flush_log_at_trx_commit = 1</span>
+</span></span><span class=line><span class=cl><span class=c1>#innodb_lock_wait_timeout = 50</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>mysqldump<span class=o>]</span>
+</span></span><span class=line><span class=cl>quick
+</span></span><span class=line><span class=cl><span class=nv>max_allowed_packet</span> <span class=o>=</span> 16M
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>mysql<span class=o>]</span>
+</span></span><span class=line><span class=cl>no-auto-rehash
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>myisamchk<span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=nv>key_buffer_size</span> <span class=o>=</span> 20M
+</span></span><span class=line><span class=cl><span class=nv>sort_buffer_size</span> <span class=o>=</span> 20M
+</span></span><span class=line><span class=cl><span class=nv>read_buffer</span> <span class=o>=</span> 2M
+</span></span><span class=line><span class=cl><span class=nv>write_buffer</span> <span class=o>=</span> 2M
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=o>[</span>mysqlhotcopy<span class=o>]</span>
+</span></span><span class=line><span class=cl>interactive-timeout
+</span></span></code></pre></div><h3 id=27-配置mycnf-2-etcmycnf>2.7 配置my.cnf 2 (/etc/my.cnf)<a class=anchor href=#27-%e9%85%8d%e7%bd%aemycnf-2-etcmycnf aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>sed -i <span class=s1>&#39;s:^#innodb:innodb:g&#39;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>或
+</span></span><span class=line><span class=cl>sed -i <span class=s1>&#39;/^default_storage_engine/d&#39;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>sed -i <span class=s1>&#39;s#default_storage_engine.*#default_storage_engine = MyISAM#&#39;</span> /etc/my.cnf
+</span></span></code></pre></div><h3 id=28-初始化数据库存储>2.8 初始化数据库存储<a class=anchor href=#28-%e5%88%9d%e5%a7%8b%e5%8c%96%e6%95%b0%e6%8d%ae%e5%ba%93%e5%ad%98%e5%82%a8 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>chown -R mysql:mysql <span class=si>${</span><span class=nv>MySQL_Data_Dir</span><span class=si>}</span>
+</span></span><span class=line><span class=cl>/usr/local/mysql/bin/mysqld --initialize  --basedir<span class=o>=</span>/usr/local/mysql --datadir<span class=o>=</span><span class=si>${</span><span class=nv>MySQL_Data_Dir</span><span class=si>}</span> --user<span class=o>=</span>mysql
+</span></span></code></pre></div><h3 id=29-链接mysql开发库>2.9 链接mysql开发库<a class=anchor href=#29-%e9%93%be%e6%8e%a5mysql%e5%bc%80%e5%8f%91%e5%ba%93 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>cat &gt; /etc/ld.so.conf.d/mysql.conf<span class=s>&lt;&lt;EOF
+</span></span></span><span class=line><span class=cl><span class=s> /usr/local/mysql/lib/mysql
+</span></span></span><span class=line><span class=cl><span class=s> /usr/local/lib
+</span></span></span><span class=line><span class=cl><span class=s>EOF</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>ldconfig
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>ln -sf /usr/local/mysql/lib/mysql /usr/lib/mysql
+</span></span><span class=line><span class=cl>ln -sf /usr/local/mysql/include/mysql /usr/include/mysql
+</span></span></code></pre></div><h2 id=30-链接shell命令系统>3.0 链接Shell命令系统<a class=anchor href=#30-%e9%93%be%e6%8e%a5shell%e5%91%bd%e4%bb%a4%e7%b3%bb%e7%bb%9f aria-label="Link to this section">#</a></h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>ln -sf /usr/local/mysql/bin/mysql /usr/bin/mysql
+</span></span><span class=line><span class=cl>ln -sf /usr/local/mysql/bin/mysqldump /usr/bin/mysqldump
+</span></span><span class=line><span class=cl>ln -sf /usr/local/mysql/bin/myisamchk /usr/bin/myisamchk
+</span></span><span class=line><span class=cl>ln -sf /usr/local/mysql/bin/mysqld_safe /usr/bin/mysqld_safe
+</span></span><span class=line><span class=cl>ln -sf /usr/local/mysql/bin/mysqlcheck /usr/bin/mysqlcheck
+</span></span></code></pre></div><h3 id=31-修改mysql密码>3.1 修改mysql密码<a class=anchor href=#31-%e4%bf%ae%e6%94%b9mysql%e5%af%86%e7%a0%81 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl> /usr/local/mysql/bin/mysqladmin -u root password <span class=s2>&#34;</span><span class=si>${</span><span class=nv>DB_Root_Password</span><span class=si>}</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl> ALTER USER <span class=s1>&#39;root&#39;</span>@<span class=s1>&#39;localhost&#39;</span> IDENTIFIED BY <span class=s1>&#39;MyNewPass&#39;</span><span class=p>;</span>
+</span></span></code></pre></div><h3 id=33-启动服务>3.3 启动服务<a class=anchor href=#33-%e5%90%af%e5%8a%a8%e6%9c%8d%e5%8a%a1 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>/usr/local/mysql/support-files/mysql.server start
+</span></span></code></pre></div><h3 id=32-mysql高级配置>3.2 MYSQL高级配置<a class=anchor href=#32-mysql%e9%ab%98%e7%ba%a7%e9%85%8d%e7%bd%ae aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>        MySQL_Opt<span class=o>()</span>
+</span></span><span class=line><span class=cl>        <span class=o>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=o>[[</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -gt <span class=m>1024</span> <span class=o>&amp;&amp;</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -lt <span class=m>2048</span> <span class=o>]]</span><span class=p>;</span> <span class=k>then</span>
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^key_buffer_size.*#key_buffer_size = 32M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^table_open_cache.*#table_open_cache = 128#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^sort_buffer_size.*#sort_buffer_size = 768K#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^read_buffer_size.*#read_buffer_size = 768K#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^myisam_sort_buffer_size.*#myisam_sort_buffer_size = 8M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^thread_cache_size.*#thread_cache_size = 16#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^query_cache_size.*#query_cache_size = 16M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^tmp_table_size.*#tmp_table_size = 32M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_buffer_pool_size.*#innodb_buffer_pool_size = 128M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_log_file_size.*#innodb_log_file_size = 32M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^performance_schema_max_table_instances.*#performance_schema_max_table_instances = 1000&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>        <span class=k>elif</span> <span class=o>[[</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -ge <span class=m>2048</span> <span class=o>&amp;&amp;</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -lt <span class=m>4096</span> <span class=o>]]</span><span class=p>;</span> <span class=k>then</span>
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^key_buffer_size.*#key_buffer_size = 64M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^table_open_cache.*#table_open_cache = 256#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^sort_buffer_size.*#sort_buffer_size = 1M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^read_buffer_size.*#read_buffer_size = 1M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^myisam_sort_buffer_size.*#myisam_sort_buffer_size = 16M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^thread_cache_size.*#thread_cache_size = 32#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^query_cache_size.*#query_cache_size = 32M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^tmp_table_size.*#tmp_table_size = 64M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_buffer_pool_size.*#innodb_buffer_pool_size = 256M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_log_file_size.*#innodb_log_file_size = 64M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^performance_schema_max_table_instances.*#performance_schema_max_table_instances = 2000&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>        <span class=k>elif</span> <span class=o>[[</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -ge <span class=m>4096</span> <span class=o>&amp;&amp;</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -lt <span class=m>8192</span> <span class=o>]]</span><span class=p>;</span> <span class=k>then</span>
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^key_buffer_size.*#key_buffer_size = 128M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^table_open_cache.*#table_open_cache = 512#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^sort_buffer_size.*#sort_buffer_size = 2M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^read_buffer_size.*#read_buffer_size = 2M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^myisam_sort_buffer_size.*#myisam_sort_buffer_size = 32M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^thread_cache_size.*#thread_cache_size = 64#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^query_cache_size.*#query_cache_size = 64M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^tmp_table_size.*#tmp_table_size = 64M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_buffer_pool_size.*#innodb_buffer_pool_size = 512M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_log_file_size.*#innodb_log_file_size = 128M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^performance_schema_max_table_instances.*#performance_schema_max_table_instances = 4000&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>        <span class=k>elif</span> <span class=o>[[</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -ge <span class=m>8192</span> <span class=o>&amp;&amp;</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -lt <span class=m>16384</span> <span class=o>]]</span><span class=p>;</span> <span class=k>then</span>
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^key_buffer_size.*#key_buffer_size = 256M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^table_open_cache.*#table_open_cache = 1024#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^sort_buffer_size.*#sort_buffer_size = 4M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^read_buffer_size.*#read_buffer_size = 4M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^myisam_sort_buffer_size.*#myisam_sort_buffer_size = 64M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^thread_cache_size.*#thread_cache_size = 128#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^query_cache_size.*#query_cache_size = 128M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^tmp_table_size.*#tmp_table_size = 128M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_buffer_pool_size.*#innodb_buffer_pool_size = 1024M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_log_file_size.*#innodb_log_file_size = 256M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^performance_schema_max_table_instances.*#performance_schema_max_table_instances = 6000&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>        <span class=k>elif</span> <span class=o>[[</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -ge <span class=m>16384</span> <span class=o>&amp;&amp;</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -lt <span class=m>32768</span> <span class=o>]]</span><span class=p>;</span> <span class=k>then</span>
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^key_buffer_size.*#key_buffer_size = 512M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^table_open_cache.*#table_open_cache = 2048#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^sort_buffer_size.*#sort_buffer_size = 8M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^read_buffer_size.*#read_buffer_size = 8M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^myisam_sort_buffer_size.*#myisam_sort_buffer_size = 128M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^thread_cache_size.*#thread_cache_size = 256#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^query_cache_size.*#query_cache_size = 256M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^tmp_table_size.*#tmp_table_size = 256M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_buffer_pool_size.*#innodb_buffer_pool_size = 2048M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_log_file_size.*#innodb_log_file_size = 512M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^performance_schema_max_table_instances.*#performance_schema_max_table_instances = 8000&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>        <span class=k>elif</span> <span class=o>[[</span> <span class=si>${</span><span class=nv>MemTotal</span><span class=si>}</span> -ge <span class=m>32768</span> <span class=o>]]</span><span class=p>;</span> <span class=k>then</span>
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^key_buffer_size.*#key_buffer_size = 1024M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^table_open_cache.*#table_open_cache = 4096#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^sort_buffer_size.*#sort_buffer_size = 16M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^read_buffer_size.*#read_buffer_size = 16M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^myisam_sort_buffer_size.*#myisam_sort_buffer_size = 256M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^thread_cache_size.*#thread_cache_size = 512#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^query_cache_size.*#query_cache_size = 512M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^tmp_table_size.*#tmp_table_size = 512M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_buffer_pool_size.*#innodb_buffer_pool_size = 4096M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^innodb_log_file_size.*#innodb_log_file_size = 1024M#&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>            sed -i <span class=s2>&#34;s#^performance_schema_max_table_instances.*#performance_schema_max_table_instances = 10000&#34;</span> /etc/my.cnf
+</span></span><span class=line><span class=cl>        <span class=k>fi</span>
+</span></span><span class=line><span class=cl>    <span class=o>}</span>
+</span></span></code></pre></div><h2 id=3-安装php模块>3. 安装PHP模块<a class=anchor href=#3-%e5%ae%89%e8%a3%85php%e6%a8%a1%e5%9d%97 aria-label="Link to this section">#</a></h2><h3 id=31-安装php-7>3.1 安装PHP 7<a class=anchor href=#31-%e5%ae%89%e8%a3%85php-7 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>sudo pacman -S php
+</span></span></code></pre></div><h3 id=32-配置phpini文件>3.2 配置php.ini文件<a class=anchor href=#32-%e9%85%8d%e7%bd%aephpini%e6%96%87%e4%bb%b6 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>        sed -i <span class=s1>&#39;s/post_max_size =.*/post_max_size = 50M/g&#39;</span> /etc/php/php.ini
+</span></span><span class=line><span class=cl>        sed -i <span class=s1>&#39;s/upload_max_filesize =.*/upload_max_filesize = 50M/g&#39;</span> /etc/php/php.ini
+</span></span><span class=line><span class=cl>        sed -i <span class=s1>&#39;s/;date.timezone =.*/date.timezone = PRC/g&#39;</span> /etc/php/php.ini
+</span></span><span class=line><span class=cl>        sed -i <span class=s1>&#39;s/short_open_tag =.*/short_open_tag = On/g&#39;</span> /etc/php/php.ini
+</span></span><span class=line><span class=cl>        sed -i <span class=s1>&#39;s/;cgi.fix_pathinfo=.*/cgi.fix_pathinfo=0/g&#39;</span> /etc/php/php.ini
+</span></span><span class=line><span class=cl>        sed -i <span class=s1>&#39;s/max_execution_time =.*/max_execution_time = 300/g&#39;</span> /etc/php/php.ini
+</span></span><span class=line><span class=cl>        sed -i <span class=s1>&#39;s/disable_functions =.*/disable_functions = passthru,exec,system,chroot,scandir,chgrp,chown,shell_exec,proc_open,proc_get_status,popen,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server/g&#39;</span> /etc/php/php.ini
+</span></span></code></pre></div><h3 id=33-安装php-fpm>3.3 安装PHP-FPM<a class=anchor href=#33-%e5%ae%89%e8%a3%85php-fpm aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>sudo pacman -S php-fpm
+</span></span></code></pre></div><h3 id=34-配置php-fpm-配置文件>3.4 配置PHP-FPM 配置文件<a class=anchor href=#34-%e9%85%8d%e7%bd%aephp-fpm-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6 aria-label="Link to this section">#</a></h3><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl><span class=o>[</span>global<span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=nv>pid</span> <span class=o>=</span> /usr/local/php/var/run/php-fpm.pid
+</span></span><span class=line><span class=cl><span class=nv>error_log</span> <span class=o>=</span> /usr/local/php/var/log/php-fpm.log
+</span></span><span class=line><span class=cl><span class=nv>log_level</span> <span class=o>=</span> notice
+</span></span><span class=line><span class=cl><span class=o>[</span>www<span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=nv>listen</span> <span class=o>=</span> /tmp/php-cgi.sock
+</span></span><span class=line><span class=cl>listen.backlog <span class=o>=</span> -1
+</span></span><span class=line><span class=cl>listen.allowed_clients <span class=o>=</span> 127.0.0.1
+</span></span><span class=line><span class=cl>listen.owner <span class=o>=</span> www
+</span></span><span class=line><span class=cl>listen.group <span class=o>=</span> www
+</span></span><span class=line><span class=cl>listen.mode <span class=o>=</span> <span class=m>0666</span>
+</span></span><span class=line><span class=cl><span class=nv>user</span> <span class=o>=</span> www
+</span></span><span class=line><span class=cl><span class=nv>group</span> <span class=o>=</span> www
+</span></span><span class=line><span class=cl><span class=nv>pm</span> <span class=o>=</span> dynamic
+</span></span><span class=line><span class=cl>pm.max_children <span class=o>=</span> <span class=m>10</span>
+</span></span><span class=line><span class=cl>pm.start_servers <span class=o>=</span> <span class=m>2</span>
+</span></span><span class=line><span class=cl>pm.min_spare_servers <span class=o>=</span> <span class=m>1</span>
+</span></span><span class=line><span class=cl>pm.max_spare_servers <span class=o>=</span> <span class=m>6</span>
+</span></span><span class=line><span class=cl><span class=nv>request_terminate_timeout</span> <span class=o>=</span> <span class=m>100</span>
+</span></span><span class=line><span class=cl><span class=nv>request_slowlog_timeout</span> <span class=o>=</span> <span class=m>0</span>
+</span></span><span class=line><span class=cl><span class=nv>slowlog</span> <span class=o>=</span> var/log/slow.log
+</span></span></code></pre></div><h3 id=35-以root权限执行php-fpm命令>3.5 以root权限执行PHP-FPM命令<a class=anchor href=#35-%e4%bb%a5root%e6%9d%83%e9%99%90%e6%89%a7%e8%a1%8cphp-fpm%e5%91%bd%e4%bb%a4 aria-label="Link to this section">#</a></h3></div></div><footer class=post__footer><div class=post__tags data-reveal><a class=tag href=/icorer_blog/en/tags/linux/>Linux</a></div><nav class=pager aria-label="Adjacent essays" data-reveal><a class="pager__item pager__item--next" href=/icorer_blog/en/posts/source-code-reading-c-language-epoll-model/><span class=pager__label>Next</span>
+<span class=pager__title>源码阅读：C语言epoll模型</span></a></nav></footer></article><dialog class=lightbox id=lightbox aria-label="Image preview"><div class=lightbox__bar><span class=lightbox__caption data-lightbox-caption></span>
+<button class="icon-btn lightbox__close" type=button data-lightbox-close aria-label="Close preview"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="m4 4 12 12M16 4 4 16"/></svg></button></div><img data-lightbox-img alt></dialog></main><footer class=footer><div class=shell><div class=footer__top><p class=footer__mark>Marginalia</p><a class=footer__top-link href=#top>Back to top <span aria-hidden=true>↑</span></a></div><div class=footer__grid><div class=footer__col><p class=footer__label>About</p><p class=footer__note>A record of systems, people and days.</p></div><div class=footer__col><p class=footer__label>Read</p><a href=/icorer_blog/en/posts/>All writing</a>
+<a href=/icorer_blog/en/tags/>By topic</a>
+<a href=/icorer_blog/en/index.xml>RSS</a></div><div class=footer__col><p class=footer__label>Elsewhere</p><a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a>
+<a href=https://twitter.com/lb_icefirelabs target=_blank rel=noopener>X / Twitter</a>
+<a href=https://cv.icorer.com/ target=_blank rel=noopener>CV</a>
+<a href=mailto:corerman@gmail.com>Email</a></div></div><div class=footer__base><p>© 2026 LB · Marginalia</p></div></div></footer><dialog class=search id=search aria-label="Search writing" data-index=/icorer_blog/en/index.json><form class=search__bar role=search action=/icorer_blog/en/posts/ method=get data-search-form><svg class="search__icon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="8.6" cy="8.6" r="5.9"/><path d="m13 13 4 4"/></svg>
+<label class=visually-hidden for=search-input>Search writing</label>
+<input id=search-input type=search name=q autocomplete=off spellcheck=false placeholder="Title, topic or keyword" data-search-input>
+<button class=search__close type=button data-search-close aria-label="Close search">Esc</button></form><div class=search__body><p class=search__hint data-search-hint data-recent="Recently published">Search 38 essays</p><ul class=search__results data-search-results aria-live=polite data-empty="No essays match that word."></ul><a class=search__all href=/icorer_blog/en/posts/ data-search-all>Browse all writing <span aria-hidden=true>→</span></a></div><p class=search__keys aria-hidden=true>↑ ↓ select · Enter open · Esc close</p></dialog><script src=/icorer_blog/js/main.min.7d432a1167d4c4cda881445fe0f040ce17b40d9eed1c93503cd0a3c6006bcee5.js defer></script></body></html>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>RAG on 旁注旁观</title><link>https://icorer.com/icorer_blog/tags/rag/</link><description>Recent content in RAG on 旁注旁观</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Mon, 09 Nov 2026 11:08:09 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/rag/index.xml" rel="self" type="application/rss+xml"/><item><title>本体构建的分水岭不在模型大小</title><link>https://icorer.com/icorer_blog/posts/ai/ontology-evolution/</link><pubDate>Mon, 09 Nov 2026 11:08:09 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/ontology-evolution/</guid><description>2025 年 12 月到 2026 年 11 月，六篇论文从三个方向收口到同一个结论。本体构建的瓶颈已经从「谁能把本体写出来」移到「谁能证明写出来的东西是对的」。下面每一个数字都能回到原文的某一节或某一张表。
+片子两分十九秒，中文配音，字幕烧在画面里，也可以用播放器关掉。
+一、同一个事故，现在可以量了# 一支队伍把 40 张表的关系库交给模型，生成一版本体。人工审了两天，改掉三分之一，剩下的签了字。三个月后有人问，某条 subclass 关系是哪来的，没人答得上来。它可能是从外键推出来的，也可能是从邻表名字猜的，区别在事后无法分辨。
+这件事过去只能靠经验描述。2025 年 12 月，Burr 给了第一套统一的度量，54 个手工场景加 4 个真实数据库（PACMMOD 3(6) 第 305 篇）。2026 年 7 月，一份系统综述数完了这个方向的 30 篇论文、41 项研究（Semantic Web 17(4)）。2026 年 11 月 2 日，LLMs4OL 第三届的赛道报告发布，13 支队伍上榜。三份材料的规模差得很远，指向的问题一样。
+轻点放大 二、第一个统一基准打碎了模型通吃这条说法# Burr 的 §1 先算旧账。作者按 Mosca 等人的方式复查了十个本体学习系统，结论是多数论文根本不评测，或者只做词法比对，连 F1 怎么算都不写。
+他们的解法是把评测绑到 mapping 上（§4）。一个本体光有类名不算数，还得说清它对应数据库的哪张表、哪一列，真阳性按 mapping 算。这个改动把「名字像」和「指对了」分开，也顺手把词法 F1 的虚高暴露出来。
+微基准（§6.2.1）的结果是这样。
+系统 微基准 mapping F1 备注 Gemini 2.5 Pro，checklist 提示 0.</description></item><item><title>不再检索，改成问路：DecisionRAG 用决策模型在文档树上走</title><link>https://icorer.com/icorer_blog/posts/ai/decisionrag-retriever-free/</link><pubDate>Sun, 08 Nov 2026 12:06:43 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/decisionrag-retriever-free/</guid><description>检索的瓶颈不在候选池有多大，而在你让模型看见什么、以什么顺序看。DecisionRAG 把打分换成问路，2.68M 段的语料 1.7 秒给出 65.4 的首位命中；它同样清楚地输掉了三格。
+中文配音版，2 分 53 秒。中文与英文两版内容一致。
+原文是《Retriever-Free Retrieval: Navigating Documents with Decision Models》，Cornell 与 ASAPP，arXiv 编号 2610.35868，全文 21 页（arXiv 页面 ，PDF ）。下面每个数字都能回到原文的表号或附录号，凡是我自己算出来的都标了「我算」两个字。
+一、错的那一条，排在第一# 论文开篇是一个具体的查询。诺兰在 2000 年拍的那部电影，主角是谁。BM25 和稠密检索都会把《角斗士》排到前面去。它也是 2000 年的电影，词像，向量也像。真正能回答问题的《记忆碎片》排在后面，甚至不在前几名。
+检索器的接口只有一种比法，把查询和每个候选单独比一次。生成器已经换了两代，检索器还在做词频和余弦。
+环节 现状 后果 词频 BM25 在 MultiDoc2Dial 上 R@1 20.6 词重合不等于可答 稠密 Qwen3-Embedding-8B 27.9 召回上限由一阶段定死 重排 8B 重排器把 27.9 抬到 33.6 只能重排已经给它的候选 生成式重排 GPT-5 重排 dense top-20 到 47.5 贵、慢，仍是两段式 论文把这件事叫作能力不对称。检索器漏掉的证据，生成器再强也捞不回来。这个判断没什么新意，有意思的是它选了哪条路来修。
+二、之前到哪一步了# 修这条路有三族做法。
+一族 代表 天花板在哪 一阶段 + 重排 BM25、SPLADE++、Qwen3-Embedding、BGE、Qwen3-Reranker-8B 重排的输入永远是一阶段给的 100 条 生成式 listwise RankGPT 一路，GPT-5 重排 一次只能看 20 条，成本按 token 走 让 LLM 走层级 MemWalker、PageIndex、LATTICE 每层都要生成一串编号，慢 第三族离这篇最近。它们已经有层级，也已经在每一层做选择，只是选择的方式是「生成」。同一套层级、同一套预算，换成 GPT-5 逐字写出要保留谁，在 ConditionalQA 上要 28.</description></item><item><title>数据库的用户换了：Agent 时代的记录系统与上下文层</title><link>https://icorer.com/icorer_blog/posts/ai/agent-native-database/</link><pubDate>Fri, 06 Nov 2026 11:30:00 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/agent-native-database/</guid><description>一句话　数据库的头号用户从人换成了 Agent，于是它裂成两条腿：一条存状态、按需供给，一条供上下文、提前编译。真正变的不只是形态，是&amp;quot;检索&amp;quot;这件事的定义——从召回算法，变成编排框架加编译供给。
+一、问题：报错是写给人看的# 先看一个不起眼的改动。Supabase 把自己全部报错信息翻出来重做了一遍：不再是 500 Internal Server Error，而是在返回文本里直接写明——你为什么触发这个错误、现在该执行哪条命令修、或者去读哪个 URL 的文档。
+这个改动的动机是留存。人类程序员看到天书般的报错，会自己去 Google；Agent 看到同样的报错，会放弃并切到竞品。两家公司争的是&amp;quot;卡住之后它还愿不愿意再试一次&amp;quot;。
+它暴露的是更底层的事：数据库的设计假设全部建立在&amp;quot;用户是人&amp;quot;之上。Dashboard 给人点，API 给人调，报错给人读，实例给人规划。把这些假设逐条拿掉，剩下的才是 Agent 需要的东西。
+三个已经量化的断裂：
+断裂 事实 来源 供给颗粒度 Supabase 周新建数据库 &amp;gt;100 万个，托管库从 800 万涨到近 5000 万（一年） 官网公布（YC 播客） 使用者身份 约 70% 的新增活动来自 Agent；72.1% 的组织已有 Agent 在生产运行 官网公布 / IDC FERS n=903 上下文成本 Agent 约 85% 的计算精力消耗在&amp;quot;重新发现&amp;quot;循环上，而非任务本身 Pinecone 估算 第三条最难缠。如果每次提问都要从零开始探索一遍语料，那么数据规模每涨一个量级，成本和延迟就跟着涨一个量级。
+二、业界已经解决到什么程度# 过去 18 个月，这条线上发生的事可以压缩成五条可核对的主张，每条都带着后果。
+主张 出处 后果 工具结果的交付方式比检索算法更能决定准确率；inline 交付下 grep 在每一个 Harness×模型组合上都胜过向量检索 PwC《Is Grep All You Need?</description></item></channel></rss>
