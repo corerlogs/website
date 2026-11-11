@@ -1,0 +1,276 @@
+<!doctype html><html lang=zh-cn data-theme=light id=top><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Linux内核-内存管理: Out Of Memory Management 源码分析 · 旁注旁观</title>
+<meta name=description content="我们这篇文章 中描述了Linux内核对于 Out Of Memory Management 场景下的相关策略，接下来我们将进行Linux 5.0内核的OOM内核源码分析。
+一. 关键数据结构# 针对源码部分，我们首先需要阐述oom_kill部分的核心数据结构。
+文件路径：/linux/include/linux/oom.h
+1.1 oom_control 结 …"><meta name=author content="LB"><meta name=color-scheme content="light dark"><meta name=theme-color content="#f4f4f1"><meta property="og:site_name" content="旁注旁观"><meta property="og:title" content="Linux内核-内存管理: Out Of Memory Management 源码分析 · 旁注旁观"><meta property="og:description" content="我们这篇文章 中描述了Linux内核对于 Out Of Memory Management 场景下的相关策略，接下来我们将进行Linux 5.0内核的OOM内核源码分析。
+一. 关键数据结构# 针对源码部分，我们首先需要阐述oom_kill部分的核心数据结构。
+文件路径：/linux/include/linux/oom.h
+1.1 oom_control 结 …"><meta property="og:url" content="https://icorer.com/icorer_blog/posts/linux-kernel-memory-management-out-of-memory-management-source-code-analysis/"><meta property="og:type" content="article"><meta property="og:locale" content="zh_cn"><meta property="og:image" content="https://icorer.com/icorer_blog/img/share-default.png"><meta property="og:image:url" content="https://icorer.com/icorer_blog/img/share-default.png"><meta property="og:image:alt" content="Linux内核-内存管理: Out Of Memory Management 源码分析 · 旁注旁观"><meta itemprop=image content="https://icorer.com/icorer_blog/img/share-default.png"><meta name=twitter:image content="https://icorer.com/icorer_blog/img/share-default.png"><link rel=image_src href=https://icorer.com/icorer_blog/img/share-default.png><meta property="article:published_time" content="2020-03-08T11:45:18+08:00"><meta property="article:modified_time" content="2020-03-08T11:45:18+08:00"><meta property="article:tag" content="linux"><meta property="article:tag" content="内核源码"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="Linux内核-内存管理: Out Of Memory Management 源码分析 · 旁注旁观"><meta name=twitter:description content="我们这篇文章 中描述了Linux内核对于 Out Of Memory Management 场景下的相关策略，接下来我们将进行Linux 5.0内核的OOM内核源码分析。
+一. 关键数据结构# 针对源码部分，我们首先需要阐述oom_kill部分的核心数据结构。
+文件路径：/linux/include/linux/oom.h
+1.1 oom_control 结 …"><meta name=twitter:site content="@lb_icefirelabs"><link rel=icon type=image/svg+xml href=/icorer_blog/favicon.svg><link rel=icon href=/icorer_blog/img/favicon.ico sizes=any><link rel=apple-touch-icon href=/icorer_blog/apple-touch-icon.png><script>(function(){try{var t=localStorage.getItem("trace-theme"),e=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.dataset.theme=t||(e?"dark":"light")}catch{}})()</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/icorer_blog/css/main.min.0bfa25a72fd8cf73f6edc8abd3b15df7005fcdcfca2bb71ba3a314b1235f8f10.css integrity="sha256-C/olpy/Yz3P27cir07Fd9wBfzc/KK7cbo6MUsSNfjxA="><script>document.documentElement.classList.add("js")</script></head><body><a class=skip href=#main>跳到正文</a><header class=nav><div class="nav__inner shell"><a class=nav__brand href=/icorer_blog/ aria-label=旁注旁观><span class=nav__brand-main>旁注旁观</span>
+<span class=nav__brand-sub>Marginalia</span></a><nav class=nav__links aria-label=主导航><a href=/icorer_blog/posts/>文章</a>
+<a href=/icorer_blog/tags/>主题</a>
+<a href=https://www.icorer.com/ target=_blank rel=noopener>关于</a>
+<a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a></nav><div class=nav__tools><button class=icon-btn type=button data-search-open aria-label=搜索文章>
+<svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="8.6" cy="8.6" r="5.9"/><path d="m13 13 4 4"/></svg>
+</button>
+<a class=lang-switch href=/icorer_blog/en/ hreflang=en aria-label="Read in English">EN</a>
+<button class="icon-btn theme-btn" type=button data-theme-toggle aria-label=切换深浅色>
+<svg class="theme-btn__sun" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="10" cy="10" r="3.4"/><path d="M10 1.8v2.1m0 12.2v2.1M1.8 10h2.1m12.2.0h2.1M4.2 4.2l1.5 1.5m8.6 8.6 1.5 1.5m0-11.6-1.5 1.5M5.7 14.3l-1.5 1.5"/></svg>
+<svg class="theme-btn__moon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="M16.2 12.4A6.8 6.8.0 017.6 3.8a6.8 6.8.0 108.6 8.6z"/></svg>
+</button>
+<button class=nav__menu-btn type=button data-menu-open aria-label=打开菜单 aria-haspopup=dialog>
+<span>菜单</span><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="M2 6h16M2 14h16"/></svg></button></div></div></header><dialog class=menu id=menu aria-label=菜单><div class=menu__head><p class=menu__mark>旁注旁观</p><button class=icon-btn type=button data-menu-close aria-label=关闭菜单><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="m4 4 12 12M16 4 4 16"/></svg></button></div><nav class=menu__links aria-label=移动端导航><a href=/icorer_blog/posts/>文章</a>
+<a href=/icorer_blog/tags/>主题</a>
+<a href=https://www.icorer.com/ target=_blank rel=noopener>关于</a>
+<a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a></nav><div class=menu__foot><button class=text-btn type=button data-search-open>搜索全部文章</button>
+<a class=lang-switch href=/icorer_blog/en/ hreflang=en aria-label="Read in English">EN</a></div></dialog><main id=main><article class=post data-poster><header class=post__header><h1 class=post__title data-reveal>Linux内核-内存管理: Out Of Memory Management 源码分析</h1><p class="meta post__meta" data-reveal style=--d:120ms><time datetime=2020-03-08>2020 年 3 月 8 日</time>
+<span>6 分钟</span>
+<span>LB</span></p></header><div class=post__grid><aside class=post__aside data-reveal><details class=toc-mobile><summary>本文目录</summary><nav id=TableOfContentsMobile><ul><li><ul><li><a href=#一---关键数据结构>一. 关键数据结构</a></li><li><a href=#二--out_of_memory--函数>二. out_of_memory 函数</a></li><li><a href=#三-select_bad_processoom_evaluate_taskoom_badness函数>三. select_bad_process、oom_evaluate_task、oom_badness函数</a></li></ul></li></ul></nav></details><nav class="toc toc--desktop" aria-label=本文目录><p class=toc__title>本文目录</p><nav id=TableOfContents><ul><li><ul><li><a href=#一---关键数据结构>一. 关键数据结构</a></li><li><a href=#二--out_of_memory--函数>二. out_of_memory 函数</a></li><li><a href=#三-select_bad_processoom_evaluate_taskoom_badness函数>三. select_bad_process、oom_evaluate_task、oom_badness函数</a></li></ul></li></ul></nav></nav></aside><div class=post__prose data-prose><p>我们<a href=/icorer_blog/posts/linux-kernel-memory-management-out-of-memory-management---oom/ target=_blank rel="noopener noreferrer">这篇文章</a>
+中描述了Linux内核对于 Out Of Memory Management 场景下的相关策略，接下来我们将进行Linux 5.0内核的OOM内核源码分析。</p><h3 id=一---关键数据结构>一. 关键数据结构<a class=anchor href=#%e4%b8%80---%e5%85%b3%e9%94%ae%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84 aria-label=链接到此节>#</a></h3><p>针对源码部分，我们首先需要阐述oom_kill部分的核心数据结构。</p><p>文件路径：/linux/include/linux/oom.h</p><h4 id=11-oom_control-结构体>1.1 oom_control 结构体<a class=anchor href=#11-oom_control-%e7%bb%93%e6%9e%84%e4%bd%93 aria-label=链接到此节>#</a></h4><p>首先，我们给出具体的内核定义：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm> * Details of the page allocation that triggered the oom killer that are used to
+</span></span></span><span class=line><span class=cl><span class=cm> * determine what should be killed.
+</span></span></span><span class=line><span class=cl><span class=cm> */</span>
+</span></span><span class=line><span class=cl><span class=k>struct</span> <span class=n>oom_control</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=cm>/* Used to determine cpuset */</span>
+</span></span><span class=line><span class=cl>	<span class=k>struct</span> <span class=n>zonelist</span> <span class=o>*</span><span class=n>zonelist</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=cm>/* Used to determine mempolicy */</span>
+</span></span><span class=line><span class=cl>	<span class=kt>nodemask_t</span> <span class=o>*</span><span class=n>nodemask</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=cm>/* Memory cgroup in which oom is invoked, or NULL for global oom */</span>
+</span></span><span class=line><span class=cl>	<span class=k>struct</span> <span class=n>mem_cgroup</span> <span class=o>*</span><span class=n>memcg</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=cm>/* Used to determine cpuset and node locality requirement */</span>
+</span></span><span class=line><span class=cl>	<span class=k>const</span> <span class=kt>gfp_t</span> <span class=n>gfp_mask</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>	 * order == -1 means the oom kill is required by sysrq, otherwise only
+</span></span></span><span class=line><span class=cl><span class=cm>	 * for display purposes.
+</span></span></span><span class=line><span class=cl><span class=cm>	 */</span>
+</span></span><span class=line><span class=cl>	<span class=k>const</span> <span class=kt>int</span> <span class=n>order</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=cm>/* Used by oom implementation, do not set */</span>
+</span></span><span class=line><span class=cl>	<span class=kt>unsigned</span> <span class=kt>long</span> <span class=n>totalpages</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=k>struct</span> <span class=n>task_struct</span> <span class=o>*</span><span class=n>chosen</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=kt>unsigned</span> <span class=kt>long</span> <span class=n>chosen_points</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=cm>/* Used to print the constraint info. */</span>
+</span></span><span class=line><span class=cl>	<span class=k>enum</span> <span class=n>oom_constraint</span> <span class=n>constraint</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>};</span>
+</span></span></code></pre></div><p>上面这个结构体中，着重强调一下几个参数：</p><ol><li>gfp_mask：全局文件指针mask，在oom阶段被用来判断IO设备属性等。</li><li>totalpages : 总共的内存页。</li><li>chosen ：被选择待kill的进程task结构。</li><li>chosen_points：被选择待kill的进程分数。</li><li>constraint：oom分配约束的类型枚举类型。</li></ol><h3 id=二--out_of_memory--函数>二. out_of_memory 函数<a class=anchor href=#%e4%ba%8c--out_of_memory--%e5%87%bd%e6%95%b0 aria-label=链接到此节>#</a></h3><p>当操作系统内存不够使用的时候，这个函数杀死“最佳进程”，这个函数并非最优操作，只是尽量让系统运行良好。</p><p>文件路径：/linux/mm/oom_kill.c</p><p>这部分内核源码如下：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=mi>1033</span>  <span class=kt>bool</span> <span class=nf>out_of_memory</span><span class=p>(</span><span class=k>struct</span> <span class=n>oom_control</span> <span class=o>*</span><span class=n>oc</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>1034</span>  <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>1035</span>  	<span class=kt>unsigned</span> <span class=kt>long</span> <span class=n>freed</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1036</span>  	<span class=k>enum</span> <span class=n>oom_constraint</span> <span class=n>constraint</span> <span class=o>=</span> <span class=n>CONSTRAINT_NONE</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1037</span>  
+</span></span><span class=line><span class=cl><span class=mi>1038</span>  	<span class=k>if</span> <span class=p>(</span><span class=n>oom_killer_disabled</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>1039</span>  		<span class=k>return</span> <span class=nb>false</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1040</span>  
+</span></span><span class=line><span class=cl><span class=mi>1041</span>  	<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=nf>is_memcg_oom</span><span class=p>(</span><span class=n>oc</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>1042</span>  		<span class=nf>blocking_notifier_call_chain</span><span class=p>(</span><span class=o>&amp;</span><span class=n>oom_notify_list</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>freed</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1043</span>  		<span class=k>if</span> <span class=p>(</span><span class=n>freed</span> <span class=o>&gt;</span> <span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>1044</span>  			<span class=cm>/* Got some memory back in the last second. */</span>
+</span></span><span class=line><span class=cl><span class=mi>1045</span>  			<span class=k>return</span> <span class=nb>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1046</span>  	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=mi>1047</span>  
+</span></span><span class=line><span class=cl><span class=mi>1048</span>  	<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>1049  	 * If current has a pending SIGKILL or is exiting, then automatically
+</span></span></span><span class=line><span class=cl><span class=cm>1050  	 * select it.  The goal is to allow it to allocate so that it may
+</span></span></span><span class=line><span class=cl><span class=cm>1051  	 * quickly exit and free its memory.
+</span></span></span><span class=line><span class=cl><span class=cm>1052  	 */</span>
+</span></span><span class=line><span class=cl><span class=mi>1053</span>  	<span class=k>if</span> <span class=p>(</span><span class=nf>task_will_free_mem</span><span class=p>(</span><span class=n>current</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>1054</span>  		<span class=nf>mark_oom_victim</span><span class=p>(</span><span class=n>current</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1055</span>  		<span class=nf>wake_oom_reaper</span><span class=p>(</span><span class=n>current</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1056</span>  		<span class=k>return</span> <span class=nb>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1057</span>  	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=mi>1058</span>  
+</span></span><span class=line><span class=cl><span class=mi>1059</span>  	<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>1060  	 * The OOM killer does not compensate for IO-less reclaim.
+</span></span></span><span class=line><span class=cl><span class=cm>1061  	 * pagefault_out_of_memory lost its gfp context so we have to
+</span></span></span><span class=line><span class=cl><span class=cm>1062  	 * make sure exclude 0 mask - all other users should have at least
+</span></span></span><span class=line><span class=cl><span class=cm>1063  	 * ___GFP_DIRECT_RECLAIM to get here.
+</span></span></span><span class=line><span class=cl><span class=cm>1064  	 */</span>
+</span></span><span class=line><span class=cl><span class=mi>1065</span>  	<span class=k>if</span> <span class=p>(</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>gfp_mask</span> <span class=o>&amp;&amp;</span> <span class=o>!</span><span class=p>(</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>gfp_mask</span> <span class=o>&amp;</span> <span class=n>__GFP_FS</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=mi>1066</span>  		<span class=k>return</span> <span class=nb>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1067</span>  
+</span></span><span class=line><span class=cl><span class=mi>1068</span>  	<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>1069  	 * Check if there were limitations on the allocation (only relevant for
+</span></span></span><span class=line><span class=cl><span class=cm>1070  	 * NUMA and memcg) that may require different handling.
+</span></span></span><span class=line><span class=cl><span class=cm>1071  	 */</span>
+</span></span><span class=line><span class=cl><span class=mi>1072</span>  	<span class=n>constraint</span> <span class=o>=</span> <span class=nf>constrained_alloc</span><span class=p>(</span><span class=n>oc</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1073</span>  	<span class=k>if</span> <span class=p>(</span><span class=n>constraint</span> <span class=o>!=</span> <span class=n>CONSTRAINT_MEMORY_POLICY</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>1074</span>  		<span class=n>oc</span><span class=o>-&gt;</span><span class=n>nodemask</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1075</span>  	<span class=nf>check_panic_on_oom</span><span class=p>(</span><span class=n>oc</span><span class=p>,</span> <span class=n>constraint</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1076</span>  
+</span></span><span class=line><span class=cl><span class=mi>1077</span>  	<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=nf>is_memcg_oom</span><span class=p>(</span><span class=n>oc</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=n>sysctl_oom_kill_allocating_task</span> <span class=o>&amp;&amp;</span>
+</span></span><span class=line><span class=cl><span class=mi>1078</span>  	    <span class=n>current</span><span class=o>-&gt;</span><span class=n>mm</span> <span class=o>&amp;&amp;</span> <span class=o>!</span><span class=nf>oom_unkillable_task</span><span class=p>(</span><span class=n>current</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>oc</span><span class=o>-&gt;</span><span class=n>nodemask</span><span class=p>)</span> <span class=o>&amp;&amp;</span>
+</span></span><span class=line><span class=cl><span class=mi>1079</span>  	    <span class=n>current</span><span class=o>-&gt;</span><span class=n>signal</span><span class=o>-&gt;</span><span class=n>oom_score_adj</span> <span class=o>!=</span> <span class=n>OOM_SCORE_ADJ_MIN</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>1080</span>  		<span class=nf>get_task_struct</span><span class=p>(</span><span class=n>current</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1081</span>  		<span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span> <span class=o>=</span> <span class=n>current</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1082</span>  		<span class=nf>oom_kill_process</span><span class=p>(</span><span class=n>oc</span><span class=p>,</span> <span class=s>&#34;Out of memory (oom_kill_allocating_task)&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1083</span>  		<span class=k>return</span> <span class=nb>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1084</span>  	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=mi>1085</span>  
+</span></span><span class=line><span class=cl><span class=mi>1086</span>  	<span class=nf>select_bad_process</span><span class=p>(</span><span class=n>oc</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1087</span>  	<span class=cm>/* Found nothing?!?! */</span>
+</span></span><span class=line><span class=cl><span class=mi>1088</span>  	<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>1089</span>  		<span class=nf>dump_header</span><span class=p>(</span><span class=n>oc</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1090</span>  		<span class=nf>pr_warn</span><span class=p>(</span><span class=s>&#34;Out of memory and no killable processes...</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1091</span>  		<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>1092  		 * If we got here due to an actual allocation at the
+</span></span></span><span class=line><span class=cl><span class=cm>1093  		 * system level, we cannot survive this and will enter
+</span></span></span><span class=line><span class=cl><span class=cm>1094  		 * an endless loop in the allocator. Bail out now.
+</span></span></span><span class=line><span class=cl><span class=cm>1095  		 */</span>
+</span></span><span class=line><span class=cl><span class=mi>1096</span>  		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=nf>is_sysrq_oom</span><span class=p>(</span><span class=n>oc</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=o>!</span><span class=nf>is_memcg_oom</span><span class=p>(</span><span class=n>oc</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=mi>1097</span>  			<span class=nf>panic</span><span class=p>(</span><span class=s>&#34;System is deadlocked on memory</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1098</span>  	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=mi>1099</span>  	<span class=k>if</span> <span class=p>(</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span> <span class=o>&amp;&amp;</span> <span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span> <span class=o>!=</span> <span class=p>(</span><span class=kt>void</span> <span class=o>*</span><span class=p>)</span><span class=o>-</span><span class=mi>1UL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>1100</span>  		<span class=nf>oom_kill_process</span><span class=p>(</span><span class=n>oc</span><span class=p>,</span> <span class=o>!</span><span class=nf>is_memcg_oom</span><span class=p>(</span><span class=n>oc</span><span class=p>)</span> <span class=o>?</span> <span class=s>&#34;Out of memory&#34;</span> <span class=o>:</span>
+</span></span><span class=line><span class=cl><span class=mi>1101</span>  				 <span class=s>&#34;Memory cgroup out of memory&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>1102</span>  	<span class=k>return</span> <span class=o>!!</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>1103</span>  <span class=p>}</span>
+</span></span></code></pre></div><p>针对上面的代码，进行相关阐述如下：</p><ul><li>1038-1039 : 如果内核没有开启oom_killer 则退出执行流程。</li><li>1041-1046：如果oom_control内存上有可以追溯的函数栈，则尝试通知相关函数栈进行释放内存，如果内存释放量大于0，则代表释放了一些内存，则返回。</li><li>1053-1057：如果当前有一个挂起的SIGKILL或正在退出，则自动执行选择它。</li><li>1072-1072：确定分配约束的类型。</li><li>1075:1075：确定内核是否必须由于oom sysctl上的panic而死机。</li><li>1077-1084：针对当前正在需要运行的任务进行kill判断，如果当前任务可被kill则进行kill，如果当前任务不能被杀，则进一步判断处理。</li><li>1086-1086：select_bad_process函数非常重要，这个函数是从操作系统进程中选择一个“最佳”待杀进程进行kill操作。</li><li>1088-1098 ： 如果select_bad_process没有找到“最佳”kill进程，则内核判断是否进入了内存僵局，如果进入则崩溃系统。</li><li>1099-1101：如果找到了“最佳”kill进程，则进行kill操作，并上报日志。</li></ul><h3 id=三-select_bad_processoom_evaluate_taskoom_badness函数>三. select_bad_process、oom_evaluate_task、oom_badness函数<a class=anchor href=#%e4%b8%89-select_bad_processoom_evaluate_taskoom_badness%e5%87%bd%e6%95%b0 aria-label=链接到此节>#</a></h3><h4 id=31-select_bad_process函数>3.1 select_bad_process函数<a class=anchor href=#31-select_bad_process%e5%87%bd%e6%95%b0 aria-label=链接到此节>#</a></h4><p>这部分源代码如下：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=mi>366</span>  <span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>367   * Simple selection loop. We choose the process with the highest number of
+</span></span></span><span class=line><span class=cl><span class=cm>368   * &#39;points&#39;. In case scan was aborted, oc-&gt;chosen is set to -1.
+</span></span></span><span class=line><span class=cl><span class=cm>369   */</span>
+</span></span><span class=line><span class=cl><span class=mi>370</span>  <span class=k>static</span> <span class=kt>void</span> <span class=nf>select_bad_process</span><span class=p>(</span><span class=k>struct</span> <span class=n>oom_control</span> <span class=o>*</span><span class=n>oc</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>371</span>  <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>372</span>  	<span class=k>if</span> <span class=p>(</span><span class=nf>is_memcg_oom</span><span class=p>(</span><span class=n>oc</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=mi>373</span>  		<span class=nf>mem_cgroup_scan_tasks</span><span class=p>(</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>memcg</span><span class=p>,</span> <span class=n>oom_evaluate_task</span><span class=p>,</span> <span class=n>oc</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>374</span>  	<span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>375</span>  		<span class=k>struct</span> <span class=n>task_struct</span> <span class=o>*</span><span class=n>p</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>376</span>  
+</span></span><span class=line><span class=cl><span class=mi>377</span>  		<span class=nf>rcu_read_lock</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=mi>378</span>  		<span class=nf>for_each_process</span><span class=p>(</span><span class=n>p</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>379</span>  			<span class=k>if</span> <span class=p>(</span><span class=nf>oom_evaluate_task</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>oc</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=mi>380</span>  				<span class=k>break</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>381</span>  		<span class=nf>rcu_read_unlock</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=mi>382</span>  	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=mi>383</span>  
+</span></span><span class=line><span class=cl><span class=mi>384</span>  	<span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen_points</span> <span class=o>=</span> <span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen_points</span> <span class=o>*</span> <span class=mi>1000</span> <span class=o>/</span> <span class=n>oc</span><span class=o>-&gt;</span><span class=n>totalpages</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>385</span>  <span class=p>}</span>
+</span></span></code></pre></div><ul><li>377-381：针对进程进行遍历操作，针对每个进程进行评估工作，并选出“最佳”进程。</li></ul><h4 id=32-oom_evaluate_task-函数>3.2 oom_evaluate_task 函数<a class=anchor href=#32-oom_evaluate_task-%e5%87%bd%e6%95%b0 aria-label=链接到此节>#</a></h4><p>这部分源代码如下：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=mi>315</span>  <span class=k>static</span> <span class=kt>int</span> <span class=nf>oom_evaluate_task</span><span class=p>(</span><span class=k>struct</span> <span class=n>task_struct</span> <span class=o>*</span><span class=n>task</span><span class=p>,</span> <span class=kt>void</span> <span class=o>*</span><span class=n>arg</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>316</span>  <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>317</span>  	<span class=k>struct</span> <span class=n>oom_control</span> <span class=o>*</span><span class=n>oc</span> <span class=o>=</span> <span class=n>arg</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>318</span>  	<span class=kt>unsigned</span> <span class=kt>long</span> <span class=n>points</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>319</span>  
+</span></span><span class=line><span class=cl><span class=mi>320</span>  	<span class=k>if</span> <span class=p>(</span><span class=nf>oom_unkillable_task</span><span class=p>(</span><span class=n>task</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>oc</span><span class=o>-&gt;</span><span class=n>nodemask</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=mi>321</span>  		<span class=k>goto</span> <span class=n>next</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>322</span>  
+</span></span><span class=line><span class=cl><span class=mi>323</span>  	<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>324  	 * This task already has access to memory reserves and is being killed.
+</span></span></span><span class=line><span class=cl><span class=cm>325  	 * Don&#39;t allow any other task to have access to the reserves unless
+</span></span></span><span class=line><span class=cl><span class=cm>326  	 * the task has MMF_OOM_SKIP because chances that it would release
+</span></span></span><span class=line><span class=cl><span class=cm>327  	 * any memory is quite low.
+</span></span></span><span class=line><span class=cl><span class=cm>328  	 */</span>
+</span></span><span class=line><span class=cl><span class=mi>329</span>  	<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=nf>is_sysrq_oom</span><span class=p>(</span><span class=n>oc</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=nf>tsk_is_oom_victim</span><span class=p>(</span><span class=n>task</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>330</span>  		<span class=k>if</span> <span class=p>(</span><span class=nf>test_bit</span><span class=p>(</span><span class=n>MMF_OOM_SKIP</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>task</span><span class=o>-&gt;</span><span class=n>signal</span><span class=o>-&gt;</span><span class=n>oom_mm</span><span class=o>-&gt;</span><span class=n>flags</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=mi>331</span>  			<span class=k>goto</span> <span class=n>next</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>332</span>  		<span class=k>goto</span> <span class=n>abort</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>333</span>  	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=mi>334</span>  
+</span></span><span class=line><span class=cl><span class=mi>335</span>  	<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>336  	 * If task is allocating a lot of memory and has been marked to be
+</span></span></span><span class=line><span class=cl><span class=cm>337  	 * killed first if it triggers an oom, then select it.
+</span></span></span><span class=line><span class=cl><span class=cm>338  	 */</span>
+</span></span><span class=line><span class=cl><span class=mi>339</span>  	<span class=k>if</span> <span class=p>(</span><span class=nf>oom_task_origin</span><span class=p>(</span><span class=n>task</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>340</span>  		<span class=n>points</span> <span class=o>=</span> <span class=n>ULONG_MAX</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>341</span>  		<span class=k>goto</span> <span class=n>select</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>342</span>  	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=mi>343</span>  
+</span></span><span class=line><span class=cl><span class=mi>344</span>  	<span class=n>points</span> <span class=o>=</span> <span class=nf>oom_badness</span><span class=p>(</span><span class=n>task</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>oc</span><span class=o>-&gt;</span><span class=n>nodemask</span><span class=p>,</span> <span class=n>oc</span><span class=o>-&gt;</span><span class=n>totalpages</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>345</span>  	<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>points</span> <span class=o>||</span> <span class=n>points</span> <span class=o>&lt;</span> <span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen_points</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>346</span>  		<span class=k>goto</span> <span class=n>next</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>347</span>  
+</span></span><span class=line><span class=cl><span class=mi>348</span>  	<span class=cm>/* Prefer thread group leaders for display purposes */</span>
+</span></span><span class=line><span class=cl><span class=mi>349</span>  	<span class=k>if</span> <span class=p>(</span><span class=n>points</span> <span class=o>==</span> <span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen_points</span> <span class=o>&amp;&amp;</span> <span class=nf>thread_group_leader</span><span class=p>(</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=mi>350</span>  		<span class=k>goto</span> <span class=n>next</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>351</span>  <span class=nl>select</span><span class=p>:</span>
+</span></span><span class=line><span class=cl><span class=mi>352</span>  	<span class=k>if</span> <span class=p>(</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>353</span>  		<span class=nf>put_task_struct</span><span class=p>(</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>354</span>  	<span class=nf>get_task_struct</span><span class=p>(</span><span class=n>task</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>355</span>  	<span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span> <span class=o>=</span> <span class=n>task</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>356</span>  	<span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen_points</span> <span class=o>=</span> <span class=n>points</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>357</span>  <span class=nl>next</span><span class=p>:</span>
+</span></span><span class=line><span class=cl><span class=mi>358</span>  	<span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>359</span>  <span class=nl>abort</span><span class=p>:</span>
+</span></span><span class=line><span class=cl><span class=mi>360</span>  	<span class=k>if</span> <span class=p>(</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>361</span>  		<span class=nf>put_task_struct</span><span class=p>(</span><span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>362</span>  	<span class=n>oc</span><span class=o>-&gt;</span><span class=n>chosen</span> <span class=o>=</span> <span class=p>(</span><span class=kt>void</span> <span class=o>*</span><span class=p>)</span><span class=o>-</span><span class=mi>1UL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>363</span>  	<span class=k>return</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>364</span>  <span class=p>}</span>
+</span></span></code></pre></div><p>针对上面的代码，进行相关阐述如下：</p><ul><li>320 - 321 ：如果当前任务不可被杀、则继续选择</li><li>329 - 333 ：1.检测到当前任务可以访问内存并且已经死掉、2.不允许任何其他任务访问保留区，除非该任务具有MMF_OOM_SKIP，因为它将释放任何内存的机会非常低。</li><li>339 - 343 ： 如果当前进程正在大量分配内存、并且触发了OOM则选择它。</li><li>344 - 344 ： oom_badness函数，计算当前的进程的 不良评分。</li><li>351 - 356 ：更新oom control内存区，更新“最佳”进程。</li></ul><h4 id=33-oom_badness-函数>3.3 oom_badness 函数<a class=anchor href=#33-oom_badness-%e5%87%bd%e6%95%b0 aria-label=链接到此节>#</a></h4><p>这个函数的功能是对进程进行不良评分，函数的源代码如下：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=mi>192</span>  <span class=cm>/**
+</span></span></span><span class=line><span class=cl><span class=cm>193   * oom_badness - heuristic function to determine which candidate task to kill
+</span></span></span><span class=line><span class=cl><span class=cm>194   * @p: task struct of which task we should calculate
+</span></span></span><span class=line><span class=cl><span class=cm>195   * @totalpages: total present RAM allowed for page allocation
+</span></span></span><span class=line><span class=cl><span class=cm>196   * @memcg: task&#39;s memory controller, if constrained
+</span></span></span><span class=line><span class=cl><span class=cm>197   * @nodemask: nodemask passed to page allocator for mempolicy ooms
+</span></span></span><span class=line><span class=cl><span class=cm>198   *
+</span></span></span><span class=line><span class=cl><span class=cm>199   * The heuristic for determining which task to kill is made to be as simple and
+</span></span></span><span class=line><span class=cl><span class=cm>200   * predictable as possible.  The goal is to return the highest value for the
+</span></span></span><span class=line><span class=cl><span class=cm>201   * task consuming the most memory to avoid subsequent oom failures.
+</span></span></span><span class=line><span class=cl><span class=cm>202   */</span>
+</span></span><span class=line><span class=cl><span class=mi>203</span>  <span class=kt>unsigned</span> <span class=kt>long</span> <span class=nf>oom_badness</span><span class=p>(</span><span class=k>struct</span> <span class=n>task_struct</span> <span class=o>*</span><span class=n>p</span><span class=p>,</span> <span class=k>struct</span> <span class=n>mem_cgroup</span> <span class=o>*</span><span class=n>memcg</span><span class=p>,</span>
+</span></span><span class=line><span class=cl><span class=mi>204</span>  			  <span class=k>const</span> <span class=kt>nodemask_t</span> <span class=o>*</span><span class=n>nodemask</span><span class=p>,</span> <span class=kt>unsigned</span> <span class=kt>long</span> <span class=n>totalpages</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>205</span>  <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>206</span>  	<span class=kt>long</span> <span class=n>points</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>207</span>  	<span class=kt>long</span> <span class=n>adj</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>208</span>  
+</span></span><span class=line><span class=cl><span class=mi>209</span>  	<span class=nf>if</span> <span class=p>(</span><span class=nf>oom_unkillable_task</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>memcg</span><span class=p>,</span> <span class=n>nodemask</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=mi>210</span>  		<span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>211</span>  
+</span></span><span class=line><span class=cl><span class=mi>212</span>  	<span class=n>p</span> <span class=o>=</span> <span class=nf>find_lock_task_mm</span><span class=p>(</span><span class=n>p</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>213</span>  	<span class=nf>if</span> <span class=p>(</span><span class=o>!</span><span class=n>p</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=mi>214</span>  		<span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>215</span>  
+</span></span><span class=line><span class=cl><span class=mi>216</span>  	<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>217  	 * Do not even consider tasks which are explicitly marked oom
+</span></span></span><span class=line><span class=cl><span class=cm>218  	 * unkillable or have been already oom reaped or the are in
+</span></span></span><span class=line><span class=cl><span class=cm>219  	 * the middle of vfork
+</span></span></span><span class=line><span class=cl><span class=cm>220  	 */</span>
+</span></span><span class=line><span class=cl><span class=mi>221</span>  	<span class=n>adj</span> <span class=o>=</span> <span class=p>(</span><span class=kt>long</span><span class=p>)</span><span class=n>p</span><span class=o>-&gt;</span><span class=n>signal</span><span class=o>-&gt;</span><span class=n>oom_score_adj</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>222</span>  	<span class=nf>if</span> <span class=p>(</span><span class=n>adj</span> <span class=o>==</span> <span class=n>OOM_SCORE_ADJ_MIN</span> <span class=o>||</span>
+</span></span><span class=line><span class=cl><span class=mi>223</span>  			<span class=nf>test_bit</span><span class=p>(</span><span class=n>MMF_OOM_SKIP</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>p</span><span class=o>-&gt;</span><span class=n>mm</span><span class=o>-&gt;</span><span class=n>flags</span><span class=p>)</span> <span class=o>||</span>
+</span></span><span class=line><span class=cl><span class=mi>224</span>  			<span class=nf>in_vfork</span><span class=p>(</span><span class=n>p</span><span class=p>))</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl><span class=mi>225</span>  		<span class=nf>task_unlock</span><span class=p>(</span><span class=n>p</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>226</span>  		<span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>227</span>  	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=mi>228</span>  
+</span></span><span class=line><span class=cl><span class=mi>229</span>  	<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>230  	 * The baseline for the badness score is the proportion of RAM that each
+</span></span></span><span class=line><span class=cl><span class=cm>231  	 * task&#39;s rss, pagetable and swap space use.
+</span></span></span><span class=line><span class=cl><span class=cm>232  	 */</span>
+</span></span><span class=line><span class=cl><span class=mi>233</span>  	<span class=n>points</span> <span class=o>=</span> <span class=nf>get_mm_rss</span><span class=p>(</span><span class=n>p</span><span class=o>-&gt;</span><span class=n>mm</span><span class=p>)</span> <span class=o>+</span> <span class=nf>get_mm_counter</span><span class=p>(</span><span class=n>p</span><span class=o>-&gt;</span><span class=n>mm</span><span class=p>,</span> <span class=n>MM_SWAPENTS</span><span class=p>)</span> <span class=o>+</span>
+</span></span><span class=line><span class=cl><span class=mi>234</span>  		<span class=nf>mm_pgtables_bytes</span><span class=p>(</span><span class=n>p</span><span class=o>-&gt;</span><span class=n>mm</span><span class=p>)</span> <span class=o>/</span> <span class=n>PAGE_SIZE</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>235</span>  	<span class=nf>task_unlock</span><span class=p>(</span><span class=n>p</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=mi>236</span>  
+</span></span><span class=line><span class=cl><span class=mi>237</span>  	<span class=cm>/* Normalize to oom_score_adj units 此处是为了调整adj的单位，增加adj的加法权重 */</span> 
+</span></span><span class=line><span class=cl><span class=mi>238</span>  	<span class=n>adj</span> <span class=o>*=</span> <span class=n>totalpages</span> <span class=o>/</span> <span class=mi>1000</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>239</span>  	<span class=n>points</span> <span class=o>+=</span> <span class=n>adj</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>240</span>  
+</span></span><span class=line><span class=cl><span class=mi>241</span>  	<span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>242  	 * Never return 0 for an eligible task regardless of the root bonus and
+</span></span></span><span class=line><span class=cl><span class=cm>243  	 * oom_score_adj (oom_score_adj can&#39;t be OOM_SCORE_ADJ_MIN here).
+</span></span></span><span class=line><span class=cl><span class=cm>244  	 */</span>
+</span></span><span class=line><span class=cl><span class=mi>245</span>  	<span class=k>return</span> <span class=n>points</span> <span class=o>&gt;</span> <span class=mi>0</span> <span class=o>?</span> <span class=nl>points</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=mi>246</span>  <span class=p>}</span>
+</span></span></code></pre></div><p>针对上面的代码，进行相关阐述如下：</p><ul><li>221 - 221 ：这行非常关键，这个是读取进程的oom_score_adj值(/proc/PID/oom_score_adj)每个进程都有一个oom_score的属性，oom killer会杀死oom_score较大的进程。</li><li>222 - 227：如果进程的oom_score_adj值 和 OOM_SCORE_ADJ_MIN (-1000)相等 ，或者进程拥有MMF_OOM_SKIP属性，或者正在进行进程fork操作 则 避免此进程。</li><li>233 - 234：不良评分的基准是每个任务的RSS，分页表和交换空间使用的RAM比例。</li><li>237 - 237 ： 标准化oom_score_adj的单位。</li></ul><p><strong>特别注意：Linux 3.10 内核针对系统管理员集成把不良分数降低 3% ， 相当于优先避免kill 系统管理员进程。</strong></p><div class=highlight><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>	/*
+</span></span><span class=line><span class=cl>	 * Root processes get 3% bonus, just like the __vm_enough_memory()
+</span></span><span class=line><span class=cl>	 * implementation used by LSMs.
+</span></span><span class=line><span class=cl>	 */
+</span></span><span class=line><span class=cl>	if (has_capability_noaudit(p, CAP_SYS_ADMIN))
+</span></span><span class=line><span class=cl>		points -= (points * 3) / 100;
+</span></span></code></pre></div></div></div><footer class=post__footer><div class=post__tags data-reveal><a class=tag href=/icorer_blog/tags/linux/>Linux</a><a class=tag href=/icorer_blog/tags/%E5%86%85%E6%A0%B8%E6%BA%90%E7%A0%81/>内核源码</a></div><nav class=pager aria-label=相邻文章 data-reveal><a class="pager__item pager__item--prev" href=/icorer_blog/posts/linux-kernel-memory-management-out-of-memory-management---oom/><span class=pager__label>上一篇</span>
+<span class=pager__title>Linux内核-内存管理: Out Of Memory Management - OOM</span>
+</a><a class="pager__item pager__item--next" href=/icorer_blog/posts/getting-to-go-the-journey-of-gos-garbage-collector/><span class=pager__label>下一篇</span>
+<span class=pager__title>Go的垃圾收集者之旅 [Getting to Go: The Journey of Go's Garbage Collector]</span></a></nav></footer></article><dialog class=lightbox id=lightbox aria-label=图片预览><div class=lightbox__bar><span class=lightbox__caption data-lightbox-caption></span>
+<button class="icon-btn lightbox__close" type=button data-lightbox-close aria-label=关闭预览><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><path d="m4 4 12 12M16 4 4 16"/></svg></button></div><img data-lightbox-img alt></dialog></main><footer class=footer><div class=shell><div class=footer__top><p class=footer__mark>旁注旁观</p><a class=footer__top-link href=#top>回到顶部 <span aria-hidden=true>↑</span></a></div><div class=footer__grid><div class=footer__col><p class=footer__label>关于</p><p class=footer__note>记录系统、人与日子。</p></div><div class=footer__col><p class=footer__label>浏览</p><a href=/icorer_blog/posts/>全部文章</a>
+<a href=/icorer_blog/tags/>按主题</a>
+<a href=/icorer_blog/index.xml>RSS</a></div><div class=footer__col><p class=footer__label>联系</p><a href=https://github.com/gitsrc target=_blank rel=noopener>GitHub</a>
+<a href=https://twitter.com/lb_icefirelabs target=_blank rel=noopener>X / Twitter</a>
+<a href=https://cv.icorer.com/ target=_blank rel=noopener>CV</a>
+<a href=mailto:corerman@gmail.com>Email</a></div></div><div class=footer__base><p>© 2026 LB · 旁注旁观</p></div></div></footer><dialog class=search id=search aria-label=搜索文章 data-index=/icorer_blog/index.json><form class=search__bar role=search action=/icorer_blog/posts/ method=get data-search-form><svg class="search__icon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentcolor" stroke-width="1.4"><circle cx="8.6" cy="8.6" r="5.9"/><path d="m13 13 4 4"/></svg>
+<label class=visually-hidden for=search-input>搜索文章</label>
+<input id=search-input type=search name=q autocomplete=off spellcheck=false placeholder=标题、主题或关键词 data-search-input>
+<button class=search__close type=button data-search-close aria-label=关闭搜索>Esc</button></form><div class=search__body><p class=search__hint data-search-hint data-recent=最近更新>输入以在 95 篇文章中查找</p><ul class=search__results data-search-results aria-live=polite data-empty=没有找到匹配的文章。></ul><a class=search__all href=/icorer_blog/posts/ data-search-all>浏览全部文章 <span aria-hidden=true>→</span></a></div><p class=search__keys aria-hidden=true>↑ ↓ 选择 · Enter 打开 · Esc 关闭</p></dialog><script src=/icorer_blog/js/main.min.7d432a1167d4c4cda881445fe0f040ce17b40d9eed1c93503cd0a3c6006bcee5.js defer></script></body></html>
