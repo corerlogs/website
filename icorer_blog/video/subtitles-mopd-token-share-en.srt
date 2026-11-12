@@ -1,0 +1,151 @@
+1
+00:00:00,500 --> 00:00:02,369
+One prompt goes to one teacher.
+
+2
+00:00:02,369 --> 00:00:04,600
+But the loss is averaged over tokens,
+
+3
+00:00:04,600 --> 00:00:07,373
+so whoever writes longer gets more of the say.
+
+4
+00:00:07,373 --> 00:00:10,388
+Instruction following holds a fifth of the prompts
+
+5
+00:00:10,388 --> 00:00:12,860
+and 1 to 3 percent of the trained tokens.
+
+6
+00:00:13,960 --> 00:00:17,648
+Multi-teacher on-policy distillation runs in three stages.
+
+7
+00:00:17,648 --> 00:00:21,209
+General supervised fine-tuning gives one starting point.
+
+8
+00:00:21,209 --> 00:00:23,880
+Each domain then trains its own RL expert,
+
+9
+00:00:23,880 --> 00:00:27,568
+one for math, one for code, one for instruction following.
+
+10
+00:00:27,568 --> 00:00:29,348
+The fusion stage comes last,
+
+11
+00:00:29,348 --> 00:00:32,464
+and there the student writes every answer itself.
+
+12
+00:00:33,564 --> 00:00:36,231
+The teacher never writes a single token.
+
+13
+00:00:36,231 --> 00:00:38,164
+It reads the student's answer
+
+14
+00:00:38,164 --> 00:00:41,164
+and returns a distribution at every position.
+
+15
+00:00:41,164 --> 00:00:43,831
+The student learns from its own writing,
+
+16
+00:00:43,831 --> 00:00:46,764
+so an early mistake no longer moves it away.
+
+17
+00:00:47,864 --> 00:00:52,078
+A public experiment ran sixty steps with three real experts,
+
+18
+00:00:52,078 --> 00:00:55,028
+about one percent of the paper's training.
+
+19
+00:00:55,028 --> 00:00:57,275
+Distance to math and code falls.
+
+20
+00:00:57,275 --> 00:01:00,435
+Distance to instruction following stays flat.
+
+21
+00:01:00,435 --> 00:01:03,104
+The evaluation follows the same shape.
+
+22
+00:01:04,204 --> 00:01:07,913
+The paper calls it token budget misallocation.
+
+23
+00:01:07,913 --> 00:01:10,170
+Same student, same teachers,
+
+24
+00:01:10,170 --> 00:01:14,846
+the standard recipe recovers 35.6 percent of the headroom.
+
+25
+00:01:14,846 --> 00:01:17,668
+With the three fixes, 83.4 percent.
+
+26
+00:01:18,768 --> 00:01:22,380
+Inside T R L, three values change the accounting.
+
+27
+00:01:22,380 --> 00:01:24,666
+beta defaults to 0, forward KL,
+
+28
+00:01:24,666 --> 00:01:27,467
+while stage three of the paper uses 1.
+
+29
+00:01:27,467 --> 00:01:30,564
+top k only shapes anything when beta is 0.
+
+30
+00:01:30,564 --> 00:01:34,176
+And every teacher shares the student's tokenizer.
+
+31
+00:01:35,276 --> 00:01:38,271
+The fusion stage runs five processes at once.
+
+32
+00:01:38,271 --> 00:01:41,799
+On four H 200s, one server generates for the student,
+
+33
+00:01:41,799 --> 00:01:44,262
+two serve three teachers, one trains.
+
+34
+00:01:44,262 --> 00:01:45,926
+The teachers stay frozen,
+
+35
+00:01:45,926 --> 00:01:48,788
+and only the student's weights travel back.
+
+36
+00:01:49,888 --> 00:01:53,263
+Open the training log and look at teacher token frac.
+
+37
+00:01:53,263 --> 00:01:56,637
+A starved teacher still reports a healthy divergence.
+
+38
+00:01:56,637 --> 00:01:59,248
+Only the token share tells you the truth.
