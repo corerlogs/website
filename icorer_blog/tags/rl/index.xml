@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>RL on 旁注旁观</title><link>https://icorer.com/icorer_blog/tags/rl/</link><description>Recent content in RL on 旁注旁观</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Tue, 10 Nov 2026 07:02:51 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/rl/index.xml" rel="self" type="application/rss+xml"/><item><title>多教师蒸馏按 token 分账</title><link>https://icorer.com/icorer_blog/posts/ai/mopd-token-share/</link><pubDate>Tue, 10 Nov 2026 07:02:51 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/mopd-token-share/</guid><description>TRL 的多教师在线蒸馏示例跑了 60 步。指令跟随拿了 20% 的 prompt，训练 token 只分到 1% 到 3%，它是三科里唯一没学动的。Open-MOPD 那篇论文把这个现象叫 token 预算错配，修完之后可回收的能力上限从 35.6% 提到 83.4%。
-片子一分五十八秒，中文配音，字幕烧在画面里。
-一、六十步之后，只有一条线没动# 2026 年 11 月，Hugging Face 的 Sergio Paniego 把 Open-MOPD 放出的三个专家接到 TRL 的 AsyncDistillationTrainer 上。学生是 SmolLM3-3B 的 SFT 检查点，三个教师分别用 GRPO 在数学、代码、指令跟随上训过。跑 60 步，大约是论文训练量的百分之一。
-训练日志里出现两件事。teacher_token_frac 显示指令跟随每步只拿到 1% 到 3% 的训练 token，而它在 prompt 里占 20%。teacher_jsd 显示学生到数学、代码两个教师的距离一路往下，到指令跟随那个几乎是一条平线。
-评测端跟着这个形状走。
-模型 AIME24 AIME25 IFEval MixSFT 起点 17.5 19.2 67.5 60 步 MOPD 24.2 22.5 73.</description></item></channel></rss>
