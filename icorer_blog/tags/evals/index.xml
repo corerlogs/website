@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Evals on 旁注旁观</title><link>https://icorer.com/icorer_blog/tags/evals/</link><description>Recent content in Evals on 旁注旁观</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Mon, 09 Nov 2026 07:36:00 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/evals/index.xml" rel="self" type="application/rss+xml"/><item><title>评测（Evals）：一个 AI 系统能不能用，看四个数字</title><link>https://icorer.com/icorer_blog/posts/ai/evals-honest-numbers/</link><pubDate>Mon, 09 Nov 2026 07:36:00 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/evals-honest-numbers/</guid><description>一个 eval 的钱主要花在读输出和标用例上，代码只占很小一块。这篇把它拆成四个部件，每个部件配一个可以自己复算的数字。
+片子一分五十五秒，中文配音，字幕烧在画面里，也可以用播放器关掉。
+一、两条规则放过的回答# 一家卖自行车和露营装备的网店，客服工单进到模型里。工单说，我上周退了车，退款还没到账，你们自己写着五个工作日。
+系统的回复很客气，四段，引用了退换货那一节，两个必含事实也都在，五个工作日和二手商品 15% 的折旧费。两条代码规则同时放行，一条查有没有引用章节，一条查必含事实齐不齐。
+模型判官判它失败。它多写了一句「总额度最多 15 个工作日」。
+作者在 60 条测试用例上重跑了一遍，只有 11.7% 的回复能通过全部代码规则，而代码规则一条编造的断言都没抓到。这两个数字摆在一起，就是 eval 存在的理由。一段格式和引用都挑不出毛病的话，可以同时是错的，而错的那部分恰好是客户会当真照做的部分。
+轻点放大 二、四个词，四条路# 概念 测什么 例子 常见误用 eval 你的系统在你的数据上 这个助手跑 60 条工单 拿它跟别人的模型比 benchmark 一个模型在一套公开题上 GSM8K、SWE-bench 拿它选产品路线 test 一个函数有没有返回预期值 JSON 能解析、不崩 以为通过就是对的 monitoring 上线之后的真实流量 每天抽样评一批工单 只在出事的时候看 四件事的差别不在精度，在数据归属。benchmark 的题是别人出的，eval 的题得你自己攒，攒不出来就没有 eval。原文给了一个比喻，模型是引擎，eval 是你的车在你这条路上的表现。这个比喻站得住，因为它顺手解释了另一件事，引擎评测拿第一的模型，到你这里答错客户的问题，两件事并不矛盾。
+三、先读输出，再写判官# 任何自动判官动手之前，先把输出读一遍。作者读的是 60 条测试回复，逐条记一句失败原因，再把笔记并成类别。这批数据的结果是这样。
+结果 条数 通过 34 缺必含事实 15 有编造的断言 12 检索到错误章节 8 没有回答问题 5 数值写错 2 过度承诺 1 60 条里 34 条通过，勉强过半。最大的两个问题合计 27 条，从 demo 里完全看不出来，因为 demo 只看一条。这张表就是后面所有判官的需求文档，按频次从高到低建。给不发生的失败写判官，得到的是一个好看但没用的数字。</description></item></channel></rss>
