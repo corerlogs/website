@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>属性测试 on 旁注旁观</title><link>https://icorer.com/icorer_blog/tags/%E5%B1%9E%E6%80%A7%E6%B5%8B%E8%AF%95/</link><description>Recent content in 属性测试 on 旁注旁观</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Wed, 18 Nov 2026 09:00:00 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/%E5%B1%9E%E6%80%A7%E6%B5%8B%E8%AF%95/index.xml" rel="self" type="application/rss+xml"/><item><title>agent 写完九成代码之后，人剩下的是证据</title><link>https://icorer.com/icorer_blog/posts/ai/agent-verification-loops/</link><pubDate>Wed, 18 Nov 2026 09:00:00 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/agent-verification-loops/</guid><description>一个人能同时盯住几个 agent，取决于他能不能不读 diff 就确认对方做对了。下面是我自己跑过的那一套，以及每一条证据会被什么骗过。
+两分二十二秒，中文女声，字幕烧在画面里，没有开关。
+一、瓶颈从键盘挪到了确认# 先说那个我复核不了的数字。Claude Code 团队说，团队里绝大多数代码由 Claude 写、也由 Claude 评审，比例约九成。厂商公布，我这边没法复算，它只能说清方向。写代码不再是最慢的一环。
+没有验证手段的时候，一个人能同时管的 Claude 是一到两个，因为每一行都得自己看。有了验证手段，几十个甚至上百个可以一起跑。模型速度没变，变的是每个 agent 能自己交出证据。
+同一份材料里还有一个数字。做结构化文件生成时，让一个独立的 grader 按 rubric 打分，比标准的提示词循环最多提升 10 个百分点的任务成功率，难题上提升最大。同样是厂商公布。
+写代码便宜之后，卡住流程的地方换了。
+今天的坏法 后果 人读每一个 diff 并行度封顶在一两个 单测全绿，功能坏了 agent 和测试出自同一个理解，一起错 门禁写在 PR 里 本次改动顺手把门禁改宽 轻点放大 二、三种测试，各自能被什么骗过# 先记两条失败模式，跟测试类型无关。测试 flaky，agent 就学会重跑，修代码这一环被绕过。测试慢，一批里能跑的次数变少，出问题时定位反而更难。重的测试放在改动落地之前跑。
+端到端测的是真实用户流程，加一件商品进购物车、结账、走到确认页。它难被骗，因为整个功能要么能用要么不能用，而失败时能给你一张截图和一句哪里坏了。单元测试失败只能说 Error: Timeout after 30 seconds。代价是慢，还有 flaky。跑它的方式值得讲究，用 Chrome 扩展、模拟器或者 API harness 给 agent 一双真的手和一个真的眼。
+属性测试处理的是你没想到的那半边。先写一句你认为不可能错的断言，然后让库去生成上千个输入推翻它。JS 用 fast-check ，Python 用 Hypothesis ，Rust 用 proptest 。四类属性几乎每个项目都有。
+属性 一句话 往返 编码再解码，拿到原来的东西 不变量 余额永远不会变成负数 幂等 迁移、归一化、重试做两遍和做一遍一样 等价 优化版和朴素版给出同一个结果 差分测试拿旧系统当标准答案。同一批输入喂给新旧两个实现，输出不一样就是 bug 或者破坏性变更。它在大型迁移里最有用，因为那时候唯一还能信的行为描述就是旧系统本身。输入要用随机生成或者生产流量抽样，无关差异（空白、字段顺序）要归一化，确实该不一样的差异要列进已批准变更。</description></item></channel></rss>

@@ -1,0 +1,163 @@
+1
+00:00:00,450 --> 00:00:03,186
+Between December 2025 and November 2026,
+
+2
+00:00:03,226 --> 00:00:07,141
+six papers closed in on one answer from three directions.
+
+3
+00:00:07,181 --> 00:00:09,847
+The bottleneck in ontology construction
+
+4
+00:00:09,887 --> 00:00:12,970
+moved from who writes it to who can prove it.
+
+5
+00:00:14,010 --> 00:00:16,236
+The benchmark came first.
+
+6
+00:00:16,276 --> 00:00:20,768
+Burr binds evaluation to table and column mappings
+
+7
+00:00:20,808 --> 00:00:24,756
+across 54 scenarios and four real databases.
+
+8
+00:00:24,796 --> 00:00:29,469
+On the micro-benchmark Gemini 2.5 Pro leads at 0.60,
+
+9
+00:00:29,509 --> 00:00:31,645
+GPT-4.1 follows at 0.53,
+
+10
+00:00:31,685 --> 00:00:36,086
+and the rule-based systems land at 0.66 and 0.45.
+
+11
+00:00:36,126 --> 00:00:39,712
+On real databases the authors' own words
+
+12
+00:00:39,752 --> 00:00:42,975
+are that all systems perform poorly.
+
+13
+00:00:43,015 --> 00:00:45,694
+Rules beat every model on NPD,
+
+14
+00:00:45,734 --> 00:00:49,410
+and nothing passed the enterprise schema.
+
+15
+00:00:50,450 --> 00:00:51,994
+The gap came next.
+
+16
+00:00:52,034 --> 00:00:56,658
+A systematic review counted 30 papers and 41 studies.
+
+17
+00:00:56,698 --> 00:01:00,794
+Implementation takes 27, maintenance takes one.
+
+18
+00:01:00,834 --> 00:01:05,810
+Eleven studies ran no experiment, nine ran no evaluation.
+
+19
+00:01:05,850 --> 00:01:08,186
+One layer up it gets worse.
+
+20
+00:01:08,226 --> 00:01:10,650
+OntoAxiom ran twelve models,
+
+21
+00:01:10,690 --> 00:01:12,762
+subclass averages 0.359,
+
+22
+00:01:12,802 --> 00:01:15,050
+domain 0.038, range 0.030,
+
+23
+00:01:15,090 --> 00:01:18,570
+and changing the prompt hardly moves it.
+
+24
+00:01:19,610 --> 00:01:23,346
+What decides the score is the vocabulary.
+
+25
+00:01:23,386 --> 00:01:26,662
+Thirteen teams entered LLMs4OL 2026.
+
+26
+00:01:26,702 --> 00:01:30,438
+On Reuse, where a vocabulary is supplied,
+
+27
+00:01:30,478 --> 00:01:32,740
+five of eight clear 0.85.
+
+28
+00:01:32,780 --> 00:01:35,688
+On Flagship, with no vocabulary,
+
+29
+00:01:35,728 --> 00:01:39,740
+graph similarity runs from 0.4167 to 0.7762.
+
+30
+00:01:39,780 --> 00:01:41,582
+One team, one model,
+
+31
+00:01:41,622 --> 00:01:46,463
+the exact-to-semantic gap is 0.0212 with a vocabulary
+
+32
+00:01:46,503 --> 00:01:48,213
+and 0.2063 without.
+
+33
+00:01:48,253 --> 00:01:52,450
+Non-taxonomic relations sit near zero in both.
+
+34
+00:01:53,490 --> 00:01:56,323
+The acceptance machinery exists.
+
+35
+00:01:56,363 --> 00:01:58,927
+Forty-one pitfalls from OOPS,
+
+36
+00:01:58,967 --> 00:02:04,583
+six hundred and sixty-five flaws cut to single digits by RIGOR,
+
+37
+00:02:04,623 --> 00:02:09,163
+an axiom benchmark, and 1,393 competency questions.
+
+38
+00:02:09,203 --> 00:02:10,779
+Four holes remain.
+
+39
+00:02:10,819 --> 00:02:17,692
+Non-taxonomic relations, domain and range, maintenance, and lexical fidelity.
+
+40
+00:02:17,732 --> 00:02:20,296
+The divide is not model size.
+
+41
+00:02:20,336 --> 00:02:22,810
+It is where acceptance sits.
