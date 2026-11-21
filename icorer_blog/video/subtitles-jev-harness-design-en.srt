@@ -1,0 +1,55 @@
+1
+00:00:00,250 --> 00:00:06,952
+If a language model had no KV cache, how would you design a coding agent?
+
+2
+00:00:07,102 --> 00:00:17,140
+Reusing a prefix is cheap. Change one early token and everything after is reprocessed.
+
+3
+00:00:17,290 --> 00:00:22,440
+Take the cache away: six familiar flaws, one cause
+
+4
+00:00:23,340 --> 00:00:35,946
+Six symptoms: routing · tools · compaction · sub-agents · restarts · batteries
+
+5
+00:00:36,096 --> 00:00:42,998
+None of the six is a model capability gap. It is what the harness feeds the model.
+
+6
+00:00:43,898 --> 00:00:52,424
+Pure Opus: 25·Y + 5·Z
+
+7
+00:00:52,574 --> 00:01:01,028
+Opus → Sonnet → Opus: 3X + 20Y + 8Z
+
+8
+00:01:01,178 --> 00:01:12,496
+X=0.65 Y=0.12 Z=0.23 → 4.15 against 6.19
+
+9
+00:01:13,396 --> 00:01:22,546
+Reading files 30–40% · search 10–18% · command output 10–20%
+
+10
+00:01:22,696 --> 00:01:29,686
+Writing code 4–10%: the reason the agent exists, the smallest line item
+
+11
+00:01:29,836 --> 00:01:43,338
+fastcontext: reading and searching, 56.2% of tool turns, 46.5% of tokens
+
+12
+00:01:44,238 --> 00:01:53,340
+The same grep output: twelve hits for this query, hidden for the next
+
+13
+00:01:53,490 --> 00:02:02,352
+Four levels: hidden / short / long / full
+
+14
+00:02:02,502 --> 00:02:07,508
+The model does not have to get better. What it sees does.
