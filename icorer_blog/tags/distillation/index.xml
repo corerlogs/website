@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Distillation on 旁注旁观</title><link>https://icorer.com/icorer_blog/tags/distillation/</link><description>Recent content in Distillation on 旁注旁观</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Fri, 27 Nov 2026 17:53:08 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/distillation/index.xml" rel="self" type="application/rss+xml"/><item><title>老挝语修好了，泰语差点丢了</title><link>https://icorer.com/icorer_blog/posts/ai/lao-distillation/</link><pubDate>Fri, 27 Nov 2026 17:53:08 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/lao-distillation/</guid><description>一个 27B 的小模型答不出老挝语，缺的未必是翻译能力。它把语言认错了。而在只测目标语言的评测里，把泰语弄丢的那次运行会拿到第一名。
+一、5.5 分是什么样子# Together 在 2026 年 11 月做了一组实验，问 Qwen3.8-27B 要老挝语译文。这是这一档里最常用的小模型之一，27B 参数，泰语写得很好。要它把英文译成老挝语，它交回泰语。
+两种语言确实近。同属西南部台语支，语序和大量词汇重叠，文字完全不同。它把两件事当成了一件。
+FLORES-200 老挝语测试集 1012 句，chrF++ 5.5。这个分数算译文与人写参考的字符和词重叠，0 到 100。同一套题上 Kimi-K3.1-Pro 是 47.5。
+还有一个更直接的数，1012 句里只有 11% 的输出主要用老挝文字。
+50 句的筛查切片看得更清楚，45 句输出里含泰文字符，只有 6 句含老挝文。翻译本身不差，用错了文字。
+英文 &amp;#34;We now have 4-month-old mice that are non-diabetic that used to be diabetic,&amp;#34; he added. Qwen &amp;#34;ปัจจุบันเรามีหนูอายุ 4 เดือนที่ไม่เป็นโรคเบาหวาน ซึ่งเคยเป็นโรคเบาหวานมาก่อน&amp;#34; เขากล่าวเสริม Kimi &amp;#34;ພວກເຮົາຕອນນີ້ມີໜູອາຍຸ 4 ເດືອນ ທີ່ບໍ່ເປັນໂຣກເບົາຫວານ ເຊິ່ງເຄີຍເປັນໂຣກເບົາຫວານມາກ່ອນ,&amp;#34; ລາວກ່າວຕື່ມ. 轻点放大 二、它把语言认错了# 让教师把学生输出的老挝语译回英文，再和原句比，这叫往返充分性。
+base 模型那段泰语输出得 64.6，人工写的老挝语参考是 64.</description></item><item><title>多教师蒸馏按 token 分账</title><link>https://icorer.com/icorer_blog/posts/ai/mopd-token-share/</link><pubDate>Tue, 10 Nov 2026 07:02:51 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/mopd-token-share/</guid><description>TRL 的多教师在线蒸馏示例跑了 60 步。指令跟随拿了 20% 的 prompt，训练 token 只分到 1% 到 3%，它是三科里唯一没学动的。Open-MOPD 那篇论文把这个现象叫 token 预算错配，修完之后可回收的能力上限从 35.6% 提到 83.4%。
+一、六十步之后，只有一条线没动# 2026 年 11 月，Hugging Face 的 Sergio Paniego 把 Open-MOPD 放出的三个专家接到 TRL 的 AsyncDistillationTrainer 上。学生是 SmolLM3-3B 的 SFT 检查点，三个教师分别用 GRPO 在数学、代码、指令跟随上训过。跑 60 步，大约是论文训练量的百分之一。
+训练日志里出现两件事。teacher_token_frac 显示指令跟随每步只拿到 1% 到 3% 的训练 token，而它在 prompt 里占 20%。teacher_jsd 显示学生到数学、代码两个教师的距离一路往下，到指令跟随那个几乎是一条平线。
+评测端跟着这个形状走。
+模型 AIME24 AIME25 IFEval MixSFT 起点 17.5 19.2 67.5 60 步 MOPD 24.2 22.5 73.0 论文终版 19.</description></item></channel></rss>
