@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Benchmark on 旁注旁观</title><link>https://icorer.com/icorer_blog/tags/benchmark/</link><description>Recent content in Benchmark on 旁注旁观</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Sat, 28 Nov 2026 12:28:34 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/benchmark/index.xml" rel="self" type="application/rss+xml"/><item><title>先造一道题，再谈 bench</title><link>https://icorer.com/icorer_blog/posts/ai/bench-from-agent-trace/</link><pubDate>Sat, 28 Nov 2026 12:28:34 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/bench-from-agent-trace/</guid><description>一个 bench 的分数，撑死是几十道题的平均值。稀缺的是其中某一题里那段 gap 还在不在。
+一、gap 长在你自己的 session 里# James Zhu 十一月二十七日在 X 上写了一篇《大bench时代生存指南》，讲的就是这条路。他做的是 Benchmarks&amp;rsquo; Last Exam，日常干的活是拆别人的题。开场是一句劝，造好一道高质量的题，比上来就造一个 bench 值钱。
+场景是这样的。你让 AI 做一件正事，它在工作区里拉了一坨大的，你一句句纠偏，一百轮之后它端出来的东西勉强能用。这个 session 对你是结束了，对出题的人刚开始。
+一段这样的 session 里混着几种「没做好」，得先分开再谈出题。
+没做好的原因 轨迹里长什么样 能不能出题 context 没给足 关键约束是你在第五十轮才补上的 不能，题面写清楚就没了 能力确实不够 犯错前它已有足够信息，却选了一个看似合理的错解 能，这是原材料 偶发 换个 session 同样的话它做对了 先攒样本 没人说得清 你和它都不知道怎样算对 不能，先写判分标准 第二行原文写得更细。这道题的难，不能来自「用户事后才补充的要求」，得让人仅凭犯错前已有的信息，就有机会发现或者避开它。
+值不值得造，看两个乘数，模型表现和人类专家预期的差距有多大，以及这个问题有没有经济价值。两个都大，才值得动手。
+二、找，让 agent 翻你自己的轨迹# 轨迹就躺在硬盘上。Claude Code 写在 ~/.claude/projects/ 里，一个工作目录一个 .jsonl；Codex 写在 ~/.codex/sessions；pi 写在 ~/.pi/agent/sessions。这台机器上这三个目录的 .jsonl 加起来 100 个。
+别自己读。把筛选条件丢给 agent 跑一遍，你只看它交上来的候选。原文的四条特征在这里。
+用户指出产出结果不理想，且返工后结果发生明显变化 用户与 agent 在某一问题上多轮交互，且 agent 在该问题上有长程运行轨迹 困难不是因为用户信息没给全，能定位一个具体、看似合理的错误决定 任务有明确的输入、交付物，以及可检验的好坏标准 筛完你还得过一遍眼。这四条只认形式，不认价值，「你所在领域里值钱又难」那半句得你自己补。</description></item></channel></rss>
