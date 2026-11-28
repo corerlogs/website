@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Evals on 旁注旁观</title><link>https://icorer.com/icorer_blog/tags/evals/</link><description>Recent content in Evals on 旁注旁观</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Sat, 28 Nov 2026 12:28:34 +0800</lastBuildDate><atom:link href="https://icorer.com/icorer_blog/tags/evals/index.xml" rel="self" type="application/rss+xml"/><item><title>先造一道题，再谈 bench</title><link>https://icorer.com/icorer_blog/posts/ai/bench-from-agent-trace/</link><pubDate>Sat, 28 Nov 2026 12:28:34 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/bench-from-agent-trace/</guid><description>一个 bench 的分数，撑死是几十道题的平均值。稀缺的是其中某一题里那段 gap 还在不在。
+一、gap 长在你自己的 session 里# James Zhu 十一月二十七日在 X 上写了一篇《大bench时代生存指南》，讲的就是这条路。他做的是 Benchmarks&amp;rsquo; Last Exam，日常干的活是拆别人的题。开场是一句劝，造好一道高质量的题，比上来就造一个 bench 值钱。
+场景是这样的。你让 AI 做一件正事，它在工作区里拉了一坨大的，你一句句纠偏，一百轮之后它端出来的东西勉强能用。这个 session 对你是结束了，对出题的人刚开始。
+一段这样的 session 里混着几种「没做好」，得先分开再谈出题。
+没做好的原因 轨迹里长什么样 能不能出题 context 没给足 关键约束是你在第五十轮才补上的 不能，题面写清楚就没了 能力确实不够 犯错前它已有足够信息，却选了一个看似合理的错解 能，这是原材料 偶发 换个 session 同样的话它做对了 先攒样本 没人说得清 你和它都不知道怎样算对 不能，先写判分标准 第二行原文写得更细。这道题的难，不能来自「用户事后才补充的要求」，得让人仅凭犯错前已有的信息，就有机会发现或者避开它。
+值不值得造，看两个乘数，模型表现和人类专家预期的差距有多大，以及这个问题有没有经济价值。两个都大，才值得动手。
+二、找，让 agent 翻你自己的轨迹# 轨迹就躺在硬盘上。Claude Code 写在 ~/.claude/projects/ 里，一个工作目录一个 .jsonl；Codex 写在 ~/.codex/sessions；pi 写在 ~/.pi/agent/sessions。这台机器上这三个目录的 .jsonl 加起来 100 个。
+别自己读。把筛选条件丢给 agent 跑一遍，你只看它交上来的候选。原文的四条特征在这里。
+用户指出产出结果不理想，且返工后结果发生明显变化 用户与 agent 在某一问题上多轮交互，且 agent 在该问题上有长程运行轨迹 困难不是因为用户信息没给全，能定位一个具体、看似合理的错误决定 任务有明确的输入、交付物，以及可检验的好坏标准 筛完你还得过一遍眼。这四条只认形式，不认价值，「你所在领域里值钱又难」那半句得你自己补。</description></item><item><title>老挝语修好了，泰语差点丢了</title><link>https://icorer.com/icorer_blog/posts/ai/lao-distillation/</link><pubDate>Fri, 27 Nov 2026 17:53:08 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/lao-distillation/</guid><description>一个 27B 的小模型答不出老挝语，缺的未必是翻译能力。它把语言认错了。而在只测目标语言的评测里，把泰语弄丢的那次运行会拿到第一名。
+一、5.5 分是什么样子# Together 在 2026 年 11 月做了一组实验，问 Qwen3.8-27B 要老挝语译文。这是这一档里最常用的小模型之一，27B 参数，泰语写得很好。要它把英文译成老挝语，它交回泰语。
+两种语言确实近。同属西南部台语支，语序和大量词汇重叠，文字完全不同。它把两件事当成了一件。
+FLORES-200 老挝语测试集 1012 句，chrF++ 5.5。这个分数算译文与人写参考的字符和词重叠，0 到 100。同一套题上 Kimi-K3.1-Pro 是 47.5。
+还有一个更直接的数，1012 句里只有 11% 的输出主要用老挝文字。
+50 句的筛查切片看得更清楚，45 句输出里含泰文字符，只有 6 句含老挝文。翻译本身不差，用错了文字。
+英文 &amp;#34;We now have 4-month-old mice that are non-diabetic that used to be diabetic,&amp;#34; he added. Qwen &amp;#34;ปัจจุบันเรามีหนูอายุ 4 เดือนที่ไม่เป็นโรคเบาหวาน ซึ่งเคยเป็นโรคเบาหวานมาก่อน&amp;#34; เขากล่าวเสริม Kimi &amp;#34;ພວກເຮົາຕອນນີ້ມີໜູອາຍຸ 4 ເດືອນ ທີ່ບໍ່ເປັນໂຣກເບົາຫວານ ເຊິ່ງເຄີຍເປັນໂຣກເບົາຫວານມາກ່ອນ,&amp;#34; ລາວກ່າວຕື່ມ. 轻点放大 二、它把语言认错了# 让教师把学生输出的老挝语译回英文，再和原句比，这叫往返充分性。
+base 模型那段泰语输出得 64.6，人工写的老挝语参考是 64.</description></item><item><title>评测（Evals）：一个 AI 系统能不能用，看四个数字</title><link>https://icorer.com/icorer_blog/posts/ai/evals-honest-numbers/</link><pubDate>Mon, 09 Nov 2026 07:36:00 +0800</pubDate><guid>https://icorer.com/icorer_blog/posts/ai/evals-honest-numbers/</guid><description>一个 eval 的钱主要花在读输出和标用例上，代码只占很小一块。这篇把它拆成四个部件，每个部件配一个可以自己复算的数字。
+一、两条规则放过的回答# 一家卖自行车和露营装备的网店，客服工单进到模型里。工单说，我上周退了车，退款还没到账，你们自己写着五个工作日。
+系统的回复很客气，四段，引用了退换货那一节，两个必含事实也都在，五个工作日和二手商品 15% 的折旧费。两条代码规则同时放行，一条查有没有引用章节，一条查必含事实齐不齐。
+模型判官判它失败。它多写了一句「总额度最多 15 个工作日」。
+作者在 60 条测试用例上重跑了一遍，只有 11.7% 的回复能通过全部代码规则，而代码规则一条编造的断言都没抓到。这两个数字摆在一起，就是 eval 存在的理由。一段格式和引用都挑不出毛病的话，可以同时是错的，而错的那部分恰好是客户会当真照做的部分。
+轻点放大 二、四个词，四条路# 概念 测什么 例子 常见误用 eval 你的系统在你的数据上 这个助手跑 60 条工单 拿它跟别人的模型比 benchmark 一个模型在一套公开题上 GSM8K、SWE-bench 拿它选产品路线 test 一个函数有没有返回预期值 JSON 能解析、不崩 以为通过就是对的 monitoring 上线之后的真实流量 每天抽样评一批工单 只在出事的时候看 四件事的差别不在精度，在数据归属。benchmark 的题是别人出的，eval 的题得你自己攒，攒不出来就没有 eval。原文给了一个比喻，模型是引擎，eval 是你的车在你这条路上的表现。这个比喻站得住，因为它顺手解释了另一件事，引擎评测拿第一的模型，到你这里答错客户的问题，两件事并不矛盾。
+三、先读输出，再写判官# 任何自动判官动手之前，先把输出读一遍。作者读的是 60 条测试回复，逐条记一句失败原因，再把笔记并成类别。这批数据的结果是这样。
+结果 条数 通过 34 缺必含事实 15 有编造的断言 12 检索到错误章节 8 没有回答问题 5 数值写错 2 过度承诺 1 60 条里 34 条通过，勉强过半。最大的两个问题合计 27 条，从 demo 里完全看不出来，因为 demo 只看一条。这张表就是后面所有判官的需求文档，按频次从高到低建。给不发生的失败写判官，得到的是一个好看但没用的数字。</description></item></channel></rss>
